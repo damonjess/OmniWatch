@@ -1,0 +1,41 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.655, 53.585]
+      },
+      "properties": {
+        "id": "council_cam_01",
+        "operator": "North Lincolnshire Council",
+        "type": "Public Safety PTZ"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.648, 53.590]
+      },
+      "properties": {
+        "id": "council_cam_02",
+        "operator": "North Lincolnshire Council",
+        "type": "Town Centre Dome"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.662, 53.578]
+      },
+      "properties": {
+        "id": "council_cam_03",
+        "operator": "North Lincolnshire Council",
+        "type": "Traffic Monitoring ANPR"
+      }
+    }
+  ]
+}

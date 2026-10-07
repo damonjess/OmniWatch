@@ -1,0 +1,18 @@
+package com.example.omniwatch.data.db
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+
+@Dao
+interface CameraDao {
+    @Query("SELECT * FROM cameras")
+    suspend fun getAllCameras(): List<CameraEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCameras(cameras: List<CameraEntity>)
+
+    @Query("DELETE FROM cameras")
+    suspend fun clearAll()
+}
