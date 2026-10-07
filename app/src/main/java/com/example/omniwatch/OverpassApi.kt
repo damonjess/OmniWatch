@@ -1,14 +1,16 @@
 package com.example.omniwatch
 
-import retrofit2.http.GET
-import retrofit2.http.Query
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
+import retrofit2.http.POST
 import retrofit2.http.Url
 
 // Retrofit interface for background Overpass (OpenStreetMap) requests.
 // The endpoint is passed per call so mirror servers can be used as fallbacks.
 interface OverpassApi {
-    @GET
-    suspend fun getCctvCameras(@Url url: String, @Query("data") query: String): OverpassResponse
+    @FormUrlEncoded
+    @POST
+    suspend fun getCctvCameras(@Url url: String, @Field("data") query: String): OverpassResponse
 }
 
 data class OverpassResponse(

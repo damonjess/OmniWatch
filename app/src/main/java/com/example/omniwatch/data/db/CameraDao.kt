@@ -25,6 +25,9 @@ interface CameraDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCameras(cameras: List<CameraEntity>)
 
+    @Query("DELETE FROM cameras WHERE source = 'COUNCIL'")
+    suspend fun clearCouncilCameras()
+
     @Query("DELETE FROM cameras")
     suspend fun clearAll()
 }

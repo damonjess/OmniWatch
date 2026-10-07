@@ -10,6 +10,8 @@ data class CctvClusterItem(
     val source: String, // where the record came from, e.g. "OVERPASS"
     val operator: String,
     val type: String,
+    val snippet: String = "",
     // Every raw attribute from the source, shown verbatim in the detail sheet.
     val tags: Map<String, String> = emptyMap(),
+    val isTrafficCamera: Boolean = false,
 )

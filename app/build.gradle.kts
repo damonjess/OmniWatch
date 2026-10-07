@@ -54,6 +54,12 @@ dependencies {
     // OpenStreetMap map rendering (no API key required)
     implementation(libs.osmdroid.android)
 
+    // Coil for fast, asynchronous image loading
+    implementation("io.coil-kt:coil:2.4.0")
+    
+    // Material components for BottomSheetDialog
+    implementation("com.google.android.material:material:1.11.0")
+
     // Retrofit & Gson for network requests and data parsing
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)

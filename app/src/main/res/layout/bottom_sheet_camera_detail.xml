@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -13,18 +15,19 @@
             android:id="@+id/tvCameraSource"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/source"
-            android:textColor="#1E3A8A"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            tools:text="@string/source"
+            android:textColor="#60A5FA"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
 
         <TextView
             android:id="@+id/tvCameraTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="@string/surveillance_node"
-            android:textSize="20sp"
+            tools:text="@string/surveillance_node"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
         <TextView
@@ -32,7 +35,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="@string/operator_unknown"
+            tools:text="@string/operator_unknown"
             android:textSize="16sp" />
 
         <TextView
@@ -40,7 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="@string/type_ptz"
+            tools:text="@string/type_ptz"
             android:textSize="16sp" />
 
         <TextView
@@ -48,8 +51,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="@string/lat_lon_default"
-            android:textColor="@android:color/darker_gray"
+            tools:text="@string/lat_lon_default"
+            android:textColor="#9CA3AF"
             android:textSize="14sp" />
 
         <TextView
@@ -57,10 +60,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="@string/all_attributes"
-            android:textColor="#1E3A8A"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            tools:text="@string/all_attributes"
+            android:textColor="#60A5FA"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
 
         <LinearLayout
             android:id="@+id/tagContainer"
@@ -68,6 +72,19 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:orientation="vertical" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnVerifyImagery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/verify_with_street_imagery"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:paddingVertical="12dp"
+            app:backgroundTint="#2563EB"
+            app:cornerRadius="12dp" />
 
     </LinearLayout>
 </ScrollView>

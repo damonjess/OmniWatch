@@ -7,7 +7,7 @@
     <string name="lat_lon_default">Lat: 0.0, Lon: 0.0</string>
     <string name="camera_operator">Operator: %1$s</string>
     <string name="camera_type">Type: %1$s</string>
-    <string name="camera_coordinates">Coordinates: %1$f, %2$f</string>
+    <string name="camera_coordinates">Lat: %1$f, Lon: %2$f</string>
     <string name="all_attributes">ALL ATTRIBUTES</string>
     <string name="attribute_row">%1$s: %2$s</string>
     <plurals name="camera_count">
@@ -18,4 +18,7 @@
     <string name="camera_count_unreachable"> · Overpass unreachable (%1$s), retrying…</string>
     <string name="legend_osm">OpenStreetMap</string>
     <string name="legend_council">Council</string>
+    <string name="legend_traffic">Live Traffic</string>
+    <string name="verify_with_street_imagery">Verify with Street Imagery</string>
+    <string name="locate_me">Locate Me</string>
 </resources>

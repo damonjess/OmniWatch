@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -11,32 +12,52 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <LinearLayout
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|start"
         android:layout_margin="12dp"
-        android:background="#B31E3A8A"
-        android:orientation="vertical"
-        android:padding="8dp">
+        app:cardBackgroundColor="#CC0F172A"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
+        app:strokeWidth="0dp">
 
-        <TextView
-            android:id="@+id/tvCameraCount"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:textSize="13sp"
-            tools:text="141 cameras in view" />
+            android:orientation="vertical"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="10dp">
 
-        <TextView
-            android:id="@+id/tvLegend"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="@android:color/white"
-            android:textSize="11sp"
-            tools:text="● OpenStreetMap   ● Council" />
+            <TextView
+                android:id="@+id/tvCameraCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#F8FAFC"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:text="141 cameras in view" />
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/tvLegend"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="#CBD5E1"
+                android:textSize="12sp"
+                tools:text="● OpenStreetMap   ● Council" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabLocateMe"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:src="@android:drawable/ic_menu_mylocation"
+        android:contentDescription="@string/locate_me" />
 
 </FrameLayout>
