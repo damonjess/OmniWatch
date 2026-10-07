@@ -1,17 +1,15 @@
 package com.example.omniwatch
 
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.clustering.ClusterItem
-
-class CctvClusterItem(
-    private val position: LatLng,
+/**
+ * Plain, map-library agnostic model for a single camera shown on the map.
+ */
+data class CctvClusterItem(
+    val lat: Double,
+    val lon: Double,
     val titleStr: String,
-    val source: String, // "COUNCIL" or "OVERPASS"
+    val source: String, // where the record came from, e.g. "OVERPASS"
     val operator: String,
     val type: String,
-) : ClusterItem {
-    override fun getPosition(): LatLng = position
-    override fun getTitle(): String = titleStr
-    override fun getSnippet(): String = "$operator - $type"
-    override fun getZIndex(): Float? = null
-}
+    // Every raw attribute from the source, shown verbatim in the detail sheet.
+    val tags: Map<String, String> = emptyMap(),
+)

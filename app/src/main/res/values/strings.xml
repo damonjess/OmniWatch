@@ -8,4 +8,14 @@
     <string name="camera_operator">Operator: %1$s</string>
     <string name="camera_type">Type: %1$s</string>
     <string name="camera_coordinates">Coordinates: %1$f, %2$f</string>
+    <string name="all_attributes">ALL ATTRIBUTES</string>
+    <string name="attribute_row">%1$s: %2$s</string>
+    <plurals name="camera_count">
+        <item quantity="one">%1$d camera in view</item>
+        <item quantity="other">%1$d cameras in view</item>
+    </plurals>
+    <string name="camera_count_updating"> · updating…</string>
+    <string name="camera_count_unreachable"> · Overpass unreachable (%1$s), retrying…</string>
+    <string name="legend_osm">OpenStreetMap</string>
+    <string name="legend_council">Council</string>
 </resources>

@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [CameraEntity::class], version = 1, exportSchema = false)
+@Database(entities = [CameraEntity::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun cameraDao(): CameraDao
 
@@ -19,7 +19,11 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "omniwatch_database"
-                ).build()
+                )
+                    // This table is only a cache of remote camera data, so it is safe to
+                    // rebuild when the schema changes instead of writing a migration.
+                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .build()
                 INSTANCE = instance
                 instance
             }

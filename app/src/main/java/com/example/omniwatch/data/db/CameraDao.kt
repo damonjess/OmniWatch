@@ -10,6 +10,18 @@ interface CameraDao {
     @Query("SELECT * FROM cameras")
     suspend fun getAllCameras(): List<CameraEntity>
 
+    /** Cameras inside the visible map area, so panning shows local data instantly. */
+    @Query(
+        "SELECT * FROM cameras WHERE lat BETWEEN :latSouth AND :latNorth " +
+            "AND lon BETWEEN :lonWest AND :lonEast"
+    )
+    suspend fun getCamerasIn(
+        latSouth: Double,
+        latNorth: Double,
+        lonWest: Double,
+        lonEast: Double
+    ): List<CameraEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCameras(cameras: List<CameraEntity>)
 
