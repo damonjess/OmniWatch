@@ -22,7 +22,6 @@
         <activity
             android:name=".MapsActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.OmniWatch">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -34,7 +33,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="false"
-            android:label="@string/app_name"
             android:theme="@style/Theme.OmniWatch"
             android:windowSoftInputMode="adjustResize" />
     </application>

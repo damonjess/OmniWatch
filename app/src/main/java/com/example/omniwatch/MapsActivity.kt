@@ -36,6 +36,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
     }
 
+    @Suppress("PotentialBehaviorOverride")
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
@@ -77,9 +78,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // Populate the views with the clicked camera's data
         tvSource?.text = item.source.uppercase()
         tvTitle?.text = item.titleStr
-        tvOperator?.text = "Operator: ${item.operator}"
-        tvType?.text = "Type: ${item.type}"
-        tvCoordinates?.text = "Coordinates: ${item.position.latitude}, ${item.position.longitude}"
+        tvOperator?.text = getString(R.string.camera_operator, item.operator)
+        tvType?.text = getString(R.string.camera_type, item.type)
+        tvCoordinates?.text = getString(R.string.camera_coordinates, item.position.latitude, item.position.longitude)
 
         bottomSheetDialog.show()
     }
@@ -127,7 +128,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     title = "CCTV Camera",
                     operator = operator,
                     type = type,
-                    source = "OVERPASS"
+                    source = "OVERPASS",
                 )
             }
 

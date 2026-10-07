@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">OmniWatch</string>
+    <string name="source">SOURCE</string>
+    <string name="surveillance_node">Surveillance Node</string>
+    <string name="operator_unknown">Operator: Unknown</string>
+    <string name="type_ptz">Type: PTZ</string>
+    <string name="lat_lon_default">Lat: 0.0, Lon: 0.0</string>
+    <string name="camera_operator">Operator: %1$s</string>
+    <string name="camera_type">Type: %1$s</string>
+    <string name="camera_coordinates">Coordinates: %1$f, %2$f</string>
 </resources>

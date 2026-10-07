@@ -57,19 +57,19 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
+    implementation(libs.androidx.appcompat)
+    implementation(libs.google.material)
 
     // Google Maps & Clustering
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
-    implementation("com.google.maps.android:android-maps-utils:3.8.0")
+    implementation(libs.play.services.maps)
+    implementation(libs.android.maps.utils)
 
     // Retrofit & Gson for network requests and data parsing
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
 
     // Kotlin Coroutines for background tasks
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation(libs.kotlinx.coroutines.android)
 
     // Room Database for Offline Persistence
     implementation(libs.room.runtime)

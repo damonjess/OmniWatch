@@ -1,7 +1,7 @@
 package com.example.omniwatch
 
 import android.content.Context
-import android.graphics.Color
+import androidx.core.graphics.toColorInt
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.MarkerOptions
@@ -11,7 +11,7 @@ import com.google.maps.android.clustering.view.DefaultClusterRenderer
 class CctvClusterRenderer(
     context: Context,
     map: GoogleMap,
-    clusterManager: ClusterManager<CctvClusterItem>
+    clusterManager: ClusterManager<CctvClusterItem>,
 ) : DefaultClusterRenderer<CctvClusterItem>(context, map, clusterManager) {
 
     // Style individual markers before they appear on the map
@@ -32,6 +32,6 @@ class CctvClusterRenderer(
 
     // Style the grouped cluster bubble color (e.g., tactical dark blue)
     override fun getColor(clusterSize: Int): Int {
-        return Color.parseColor("#1E3A8A") // Replace with your preferred hex color
+        return "#1E3A8A".toColorInt()
     }
 }

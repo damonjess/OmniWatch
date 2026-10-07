@@ -3,14 +3,13 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="24dp"
-    android:background="@android:color/white">
+    android:padding="24dp">
 
     <TextView
         android:id="@+id/tvCameraSource"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="SOURCE"
+        android:text="@string/source"
         android:textSize="12sp"
         android:textStyle="bold"
         android:textColor="#1E3A8A" />
@@ -19,7 +18,7 @@
         android:id="@+id/tvCameraTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Surveillance Node"
+        android:text="@string/surveillance_node"
         android:textSize="20sp"
         android:textStyle="bold"
         android:layout_marginTop="4dp" />
@@ -28,7 +27,7 @@
         android:id="@+id/tvOperator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Operator: Unknown"
+        android:text="@string/operator_unknown"
         android:layout_marginTop="12dp"
         android:textSize="16sp" />
 
@@ -36,7 +35,7 @@
         android:id="@+id/tvType"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Type: PTZ"
+        android:text="@string/type_ptz"
         android:layout_marginTop="4dp"
         android:textSize="16sp" />
 
@@ -44,7 +43,7 @@
         android:id="@+id/tvCoordinates"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Lat: 0.0, Lon: 0.0"
+        android:text="@string/lat_lon_default"
         android:layout_marginTop="4dp"
         android:textSize="14sp"
         android:textColor="@android:color/darker_gray" />

@@ -8,7 +8,7 @@ class CctvClusterItem(
     val titleStr: String,
     val source: String, // "COUNCIL" or "OVERPASS"
     val operator: String,
-    val type: String
+    val type: String,
 ) : ClusterItem {
     override fun getPosition(): LatLng = position
     override fun getTitle(): String = titleStr
