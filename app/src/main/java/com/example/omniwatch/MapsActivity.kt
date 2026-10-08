@@ -77,6 +77,9 @@ class MapsActivity : AppCompatActivity() {
     private lateinit var councilOverlay: FolderOverlay
     private lateinit var trafficOverlay: FolderOverlay
     private lateinit var highwayOverlay: FolderOverlay
+    private lateinit var walesOverlay: FolderOverlay
+    private lateinit var niOverlay: FolderOverlay
+    private lateinit var essexOverlay: FolderOverlay
     private lateinit var cameraCountView: TextView
     private lateinit var legendView: TextView
     private lateinit var database: AppDatabase
@@ -136,11 +139,17 @@ class MapsActivity : AppCompatActivity() {
         councilOverlay = FolderOverlay()
         trafficOverlay = FolderOverlay()
         highwayOverlay = FolderOverlay()
+        walesOverlay = FolderOverlay()
+        niOverlay = FolderOverlay()
+        essexOverlay = FolderOverlay()
         mapView.overlays.add(fovOverlay)
         mapView.overlays.add(osmOverlay)
         mapView.overlays.add(councilOverlay)
         mapView.overlays.add(trafficOverlay)
         mapView.overlays.add(highwayOverlay)
+        mapView.overlays.add(walesOverlay)
+        mapView.overlays.add(niOverlay)
+        mapView.overlays.add(essexOverlay)
 
         // Panning or zooming re-queries only the area that came into view. The delay folds a
         // continuous drag into one request instead of one request per frame.
@@ -243,24 +252,36 @@ class MapsActivity : AppCompatActivity() {
                 Log.w(TAG, "Failed to fetch live traffic cameras", e)
             }
 
-            // WebTRIS sites are traffic sensors, not CCTV cameras. Use the actual National
-            // Highways camera catalogue so the marker coordinates and image URLs match.
+            // Load public National Highways and regional cameras from the catalogue. WebTRIS
+            // sites are traffic sensors, not CCTV cameras, so they are deliberately excluded.
             try {
                 val nhEntities = nhApi.getCameras().mapNotNull { camera ->
                     if (!camera.active || camera.latitude == 0.0 && camera.longitude == 0.0) return@mapNotNull null
-                    if (!camera.source.equals("national_highways", ignoreCase = true)) return@mapNotNull null
-                    val imageUrl = camera.imageUrl?.takeIf { it.startsWith("https://") }
+                    val source = when (camera.source?.lowercase()) {
+                        "national_highways" -> SOURCE_NATIONAL_HIGHWAYS
+                        "traffic_wales" -> SOURCE_TRAFFIC_WALES
+                        "northern_ireland" -> SOURCE_TRAFFICWATCH_NI
+                        "essex" -> SOURCE_ESSEX_HIGHWAYS
+                        else -> return@mapNotNull null
+                    }
+                    val imageUrl = camera.imageUrl?.let { rawUrl ->
+                        when {
+                            rawUrl.startsWith("https://") -> rawUrl
+                            rawUrl.startsWith("/") -> "https://openhighways.uk$rawUrl"
+                            else -> "https://openhighways.uk/$rawUrl"
+                        }
+                    }
                         ?: return@mapNotNull null
-                    val title = camera.name?.ifBlank { null }
-                        ?: listOfNotNull(camera.road, camera.direction).joinToString(" ").ifBlank { "National Highways CCTV" }
+                    val title = camera.name?.takeIf { it.isNotBlank() }
+                        ?: listOfNotNull(camera.road, camera.direction).joinToString(" ").ifBlank { "$source CCTV" }
                     CameraEntity(
-                        id = "nh_${camera.internalId ?: camera.id ?: return@mapNotNull null}",
+                        id = "${source}_${camera.internalId ?: camera.id ?: return@mapNotNull null}",
                         lat = camera.latitude,
                         lon = camera.longitude,
                         title = title,
-                        operator = "National Highways",
+                        operator = source,
                         type = "Traffic Camera",
-                        source = SOURCE_NATIONAL_HIGHWAYS,
+                        source = source,
                         tagsJson = CameraTags.encode(
                             mapOf(
                                 "liveImageUrl" to imageUrl,
@@ -273,8 +294,10 @@ class MapsActivity : AppCompatActivity() {
                     )
                 }
                 if (nhEntities.isNotEmpty()) {
-                    // Remove the old WebTRIS sensor records before inserting real cameras.
+                    // Remove stale records from the previous catalogue sync before inserting the
+                    // current National Highways, Wales, NI, and Essex camera set.
                     database.cameraDao().clearNationalHighwaysCameras()
+                    database.cameraDao().clearRegionalTrafficCameras()
                     database.cameraDao().insertCameras(nhEntities)
                     withContext(Dispatchers.Main) { refreshViewport(force = true) }
                 }
@@ -571,6 +594,9 @@ class MapsActivity : AppCompatActivity() {
         councilOverlay.items.clear()
         trafficOverlay.items.clear()
         highwayOverlay.items.clear()
+        walesOverlay.items.clear()
+        niOverlay.items.clear()
+        essexOverlay.items.clear()
 
         val nodes = entities.map { entity ->
             val node = entity.toNode()
@@ -606,6 +632,18 @@ class MapsActivity : AppCompatActivity() {
                     node.source == SOURCE_NATIONAL_HIGHWAYS -> {
                         icon = markerIcon(HIGHWAY_COLOR)
                         highwayOverlay.add(this)
+                    }
+                    node.source == SOURCE_TRAFFIC_WALES -> {
+                        icon = markerIcon(WALES_COLOR)
+                        walesOverlay.add(this)
+                    }
+                    node.source == SOURCE_TRAFFICWATCH_NI -> {
+                        icon = markerIcon(NI_COLOR)
+                        niOverlay.add(this)
+                    }
+                    node.source == SOURCE_ESSEX_HIGHWAYS -> {
+                        icon = markerIcon(ESSEX_COLOR)
+                        essexOverlay.add(this)
                     }
                     node.isTrafficCamera -> {
                         icon = markerIcon(TRAFFIC_COLOR)
@@ -811,10 +849,16 @@ class MapsActivity : AppCompatActivity() {
         val councilLabel = getString(R.string.legend_council)
         val londonLabel = getString(R.string.legend_london)
         val highwayLabel = getString(R.string.legend_highway)
-        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $londonLabel   $dot $highwayLabel")
+        val walesLabel = getString(R.string.legend_wales)
+        val niLabel = getString(R.string.legend_ni)
+        val essexLabel = getString(R.string.legend_essex)
+        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $londonLabel   $dot $highwayLabel   $dot $walesLabel   $dot $niLabel   $dot $essexLabel")
         val councilDot = legend.indexOf(dot, 1)
         val londonDot = legend.indexOf(dot, councilDot + 1)
         val highwayDot = legend.indexOf(dot, londonDot + 1)
+        val walesDot = legend.indexOf(dot, highwayDot + 1)
+        val niDot = legend.indexOf(dot, walesDot + 1)
+        val essexDot = legend.indexOf(dot, niDot + 1)
         legend.setSpan(ForegroundColorSpan(MARKER_COLOR), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(
             ForegroundColorSpan(COUNCIL_COLOR),
@@ -834,6 +878,9 @@ class MapsActivity : AppCompatActivity() {
             highwayDot + 1,
             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
         )
+        legend.setSpan(ForegroundColorSpan(WALES_COLOR), walesDot, walesDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        legend.setSpan(ForegroundColorSpan(NI_COLOR), niDot, niDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        legend.setSpan(ForegroundColorSpan(ESSEX_COLOR), essexDot, essexDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legendView.text = legend
     }
 
@@ -861,6 +908,9 @@ class MapsActivity : AppCompatActivity() {
         const val SOURCE_OVERPASS = "OVERPASS"
         const val SOURCE_TRAFFIC = "TRAFFIC"
         const val SOURCE_NATIONAL_HIGHWAYS = "National Highways"
+        const val SOURCE_TRAFFIC_WALES = "Traffic Wales"
+        const val SOURCE_TRAFFICWATCH_NI = "TrafficWatchNI"
+        const val SOURCE_ESSEX_HIGHWAYS = "Essex Highways"
         const val DEFAULT_CAMERA_TITLE = "CCTV Camera"
         const val UNKNOWN_OPERATOR = "Unknown Operator"
         const val UNKNOWN_TYPE = "Unknown Type"
@@ -900,5 +950,11 @@ class MapsActivity : AppCompatActivity() {
         val TRAFFIC_COLOR: Int = "#D32F2F".toColorInt()
         /** Purple for National Highways cameras, distinct from London/TfL red. */
         val HIGHWAY_COLOR: Int = "#7B1FA2".toColorInt()
+        /** Teal for Traffic Wales cameras. */
+        val WALES_COLOR: Int = "#00897B".toColorInt()
+        /** Green for Northern Ireland cameras. */
+        val NI_COLOR: Int = "#388E3C".toColorInt()
+        /** Cyan for Essex Highways cameras, clearly distinct from London/TfL red. */
+        val ESSEX_COLOR: Int = "#00ACC1".toColorInt()
     }
 }

@@ -31,6 +31,9 @@ interface CameraDao {
     @Query("DELETE FROM cameras WHERE source = 'National Highways'")
     suspend fun clearNationalHighwaysCameras()
 
+    @Query("DELETE FROM cameras WHERE source IN ('Traffic Wales', 'TrafficWatchNI', 'Essex Highways')")
+    suspend fun clearRegionalTrafficCameras()
+
     @Query("DELETE FROM cameras WHERE title LIKE '%MIDAS%' OR title LIKE '%TMU%'")
     suspend fun clearSensorCameras()
 
