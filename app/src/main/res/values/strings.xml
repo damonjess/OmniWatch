@@ -18,7 +18,8 @@
     <string name="camera_count_unreachable"> · Overpass unreachable (%1$s), retrying…</string>
     <string name="legend_osm">OpenStreetMap</string>
     <string name="legend_council">Council</string>
-    <string name="legend_traffic">Live Traffic</string>
+    <string name="legend_london">London / TfL</string>
+    <string name="legend_highway">National Highways</string>
     <string name="verify_with_street_imagery">Verify with Street Imagery</string>
     <string name="locate_me">Locate Me</string>
 </resources>

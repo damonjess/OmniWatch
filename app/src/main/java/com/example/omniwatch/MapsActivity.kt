@@ -76,6 +76,7 @@ class MapsActivity : AppCompatActivity() {
     private lateinit var osmOverlay: FolderOverlay
     private lateinit var councilOverlay: FolderOverlay
     private lateinit var trafficOverlay: FolderOverlay
+    private lateinit var highwayOverlay: FolderOverlay
     private lateinit var cameraCountView: TextView
     private lateinit var legendView: TextView
     private lateinit var database: AppDatabase
@@ -134,10 +135,12 @@ class MapsActivity : AppCompatActivity() {
         osmOverlay = FolderOverlay()
         councilOverlay = FolderOverlay()
         trafficOverlay = FolderOverlay()
+        highwayOverlay = FolderOverlay()
         mapView.overlays.add(fovOverlay)
         mapView.overlays.add(osmOverlay)
         mapView.overlays.add(councilOverlay)
         mapView.overlays.add(trafficOverlay)
+        mapView.overlays.add(highwayOverlay)
 
         // Panning or zooming re-queries only the area that came into view. The delay folds a
         // continuous drag into one request instead of one request per frame.
@@ -185,10 +188,15 @@ class MapsActivity : AppCompatActivity() {
             .build()
 
         val tflApi = retrofitTfl.create(TrafficCameraApi::class.java)
+        val retrofitNh = Retrofit.Builder()
+            .baseUrl("https://openhighways.uk/")
+            .client(client.newBuilder().readTimeout(45, TimeUnit.SECONDS).build())
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        val nhApi = retrofitNh.create(NationalHighwaysApi::class.java)
 
         lifecycleScope.launch(Dispatchers.IO) {
-            // Clean up any legacy sensor or National Highways WebTRIS entries from database
-            database.cameraDao().clearNationalHighwaysCameras()
+            // Clean up legacy sensor entries before loading the current traffic sources.
             database.cameraDao().clearSensorCameras()
 
             // Fetch live CCTV cameras with valid visual feeds (e.g., TfL JamCams)
@@ -233,6 +241,45 @@ class MapsActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to fetch live traffic cameras", e)
+            }
+
+            // WebTRIS sites are traffic sensors, not CCTV cameras. Use the actual National
+            // Highways camera catalogue so the marker coordinates and image URLs match.
+            try {
+                val nhEntities = nhApi.getCameras().mapNotNull { camera ->
+                    if (!camera.active || camera.latitude == 0.0 && camera.longitude == 0.0) return@mapNotNull null
+                    if (!camera.source.equals("national_highways", ignoreCase = true)) return@mapNotNull null
+                    val imageUrl = camera.imageUrl?.takeIf { it.startsWith("https://") }
+                        ?: return@mapNotNull null
+                    val title = camera.name?.ifBlank { null }
+                        ?: listOfNotNull(camera.road, camera.direction).joinToString(" ").ifBlank { "National Highways CCTV" }
+                    CameraEntity(
+                        id = "nh_${camera.internalId ?: camera.id ?: return@mapNotNull null}",
+                        lat = camera.latitude,
+                        lon = camera.longitude,
+                        title = title,
+                        operator = "National Highways",
+                        type = "Traffic Camera",
+                        source = SOURCE_NATIONAL_HIGHWAYS,
+                        tagsJson = CameraTags.encode(
+                            mapOf(
+                                "liveImageUrl" to imageUrl,
+                                "siteId" to (camera.internalId ?: camera.id.toString()),
+                                "road" to (camera.road ?: ""),
+                                "direction" to (camera.direction ?: ""),
+                            )
+                        ),
+                        isTrafficCamera = true,
+                    )
+                }
+                if (nhEntities.isNotEmpty()) {
+                    // Remove the old WebTRIS sensor records before inserting real cameras.
+                    database.cameraDao().clearNationalHighwaysCameras()
+                    database.cameraDao().insertCameras(nhEntities)
+                    withContext(Dispatchers.Main) { refreshViewport(force = true) }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to fetch National Highways traffic feeds", e)
             }
         }
     }
@@ -463,7 +510,7 @@ class MapsActivity : AppCompatActivity() {
         if ((operatorStr.contains("National Highways", ignoreCase = true) || 
              operatorStr.contains("Highways England", ignoreCase = true)) && 
              ref != null) {
-            liveImgUrl = "https://cctv.trafficengland.com/feeds/cctv/$ref.jpg"
+            liveImgUrl = "https://public.highwaystrafficcameras.co.uk/cctvpublicaccess/images/${ref.padStart(5, '0')}.jpg"
         }
 
         val isTraffic = tags["highway"] == "speed_camera" ||
@@ -523,6 +570,7 @@ class MapsActivity : AppCompatActivity() {
         osmOverlay.items.clear()
         councilOverlay.items.clear()
         trafficOverlay.items.clear()
+        highwayOverlay.items.clear()
 
         val nodes = entities.map { entity ->
             val node = entity.toNode()
@@ -555,6 +603,10 @@ class MapsActivity : AppCompatActivity() {
                 snippet = if (node.operator.isNotBlank() || node.type.isNotBlank()) "${node.operator} - ${node.type}" else ""
 
                 when {
+                    node.source == SOURCE_NATIONAL_HIGHWAYS -> {
+                        icon = markerIcon(HIGHWAY_COLOR)
+                        highwayOverlay.add(this)
+                    }
                     node.isTrafficCamera -> {
                         icon = markerIcon(TRAFFIC_COLOR)
                         trafficOverlay.add(this)
@@ -757,10 +809,12 @@ class MapsActivity : AppCompatActivity() {
         val dot = "\u25CF"
         val osmLabel = getString(R.string.legend_osm)
         val councilLabel = getString(R.string.legend_council)
-        val trafficLabel = getString(R.string.legend_traffic)
-        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $trafficLabel")
+        val londonLabel = getString(R.string.legend_london)
+        val highwayLabel = getString(R.string.legend_highway)
+        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $londonLabel   $dot $highwayLabel")
         val councilDot = legend.indexOf(dot, 1)
-        val trafficDot = legend.indexOf(dot, councilDot + 1)
+        val londonDot = legend.indexOf(dot, councilDot + 1)
+        val highwayDot = legend.indexOf(dot, londonDot + 1)
         legend.setSpan(ForegroundColorSpan(MARKER_COLOR), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(
             ForegroundColorSpan(COUNCIL_COLOR),
@@ -770,8 +824,14 @@ class MapsActivity : AppCompatActivity() {
         )
         legend.setSpan(
             ForegroundColorSpan(TRAFFIC_COLOR),
-            trafficDot,
-            trafficDot + 1,
+            londonDot,
+            londonDot + 1,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+        legend.setSpan(
+            ForegroundColorSpan(HIGHWAY_COLOR),
+            highwayDot,
+            highwayDot + 1,
             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
         )
         legendView.text = legend
@@ -800,6 +860,7 @@ class MapsActivity : AppCompatActivity() {
         const val TAG = "MapsActivity"
         const val SOURCE_OVERPASS = "OVERPASS"
         const val SOURCE_TRAFFIC = "TRAFFIC"
+        const val SOURCE_NATIONAL_HIGHWAYS = "National Highways"
         const val DEFAULT_CAMERA_TITLE = "CCTV Camera"
         const val UNKNOWN_OPERATOR = "Unknown Operator"
         const val UNKNOWN_TYPE = "Unknown Type"
@@ -837,5 +898,7 @@ class MapsActivity : AppCompatActivity() {
         val COUNCIL_COLOR: Int = "#1E88E5".toColorInt()
         /** Red for live traffic cameras. */
         val TRAFFIC_COLOR: Int = "#D32F2F".toColorInt()
+        /** Purple for National Highways cameras, distinct from London/TfL red. */
+        val HIGHWAY_COLOR: Int = "#7B1FA2".toColorInt()
     }
 }
