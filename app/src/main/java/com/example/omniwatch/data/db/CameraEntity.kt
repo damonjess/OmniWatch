@@ -2,7 +2,8 @@ package com.example.omniwatch.data.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.example.omniwatch.CctvClusterItem
+import com.example.omniwatch.CctvNode
+import com.example.omniwatch.CouncilDataLoader
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -15,20 +16,36 @@ data class CameraEntity(
     val title: String,
     val operator: String,
     val type: String,
-    val source: String, // where the record came from, e.g. "OVERPASS"
+    val source: String, // where the record came from, e.g. "OVERPASS", "TRAFFIC", "COUNCIL"
     // Every tag the source published, as JSON. Kept as a blob so any new OSM tag shows up
     // in the detail sheet without a schema change.
-    val tagsJson: String? = null
+    val tagsJson: String? = null,
+    val isTrafficCamera: Boolean = false
 ) {
-    fun toClusterItem(): CctvClusterItem {
-        return CctvClusterItem(
+    fun toNode(): CctvNode {
+        val tagsMap = CameraTags.decode(tagsJson)
+        val liveImg = tagsMap["liveImageUrl"] ?: tagsMap["imageUrl"] ?: tagsMap["image"] ?: tagsMap["url"]
+        val isTraffic = isTrafficCamera ||
+                source == "TRAFFIC" ||
+                source == "National Highways" ||
+                source == "TFL" ||
+                type.equals("Traffic Camera", ignoreCase = true) ||
+                type.equals("Motorway Camera", ignoreCase = true) ||
+                tagsMap["highway"] == "speed_camera" ||
+                tagsMap["highway"] == "enforcement" ||
+                tagsMap["surveillance:type"]?.contains("traffic", ignoreCase = true) == true
+
+        return CctvNode(
             lat = lat,
             lon = lon,
             titleStr = title,
             source = source,
             operator = operator,
             type = type,
-            tags = CameraTags.decode(tagsJson)
+            imageUrl = liveImg,
+            tags = tagsMap,
+            isCouncil = source == CouncilDataLoader.SOURCE_COUNCIL,
+            isTrafficCamera = isTraffic
         )
     }
 }

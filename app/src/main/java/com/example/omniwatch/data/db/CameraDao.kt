@@ -28,6 +28,12 @@ interface CameraDao {
     @Query("DELETE FROM cameras WHERE source = 'COUNCIL'")
     suspend fun clearCouncilCameras()
 
+    @Query("DELETE FROM cameras WHERE source = 'National Highways'")
+    suspend fun clearNationalHighwaysCameras()
+
+    @Query("DELETE FROM cameras WHERE title LIKE '%MIDAS%' OR title LIKE '%TMU%'")
+    suspend fun clearSensorCameras()
+
     @Query("DELETE FROM cameras")
     suspend fun clearAll()
 }

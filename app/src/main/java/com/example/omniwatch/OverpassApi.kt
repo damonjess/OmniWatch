@@ -2,7 +2,9 @@ package com.example.omniwatch
 
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
+import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 import retrofit2.http.Url
 
 // Retrofit interface for background Overpass (OpenStreetMap) requests.
@@ -10,7 +12,10 @@ import retrofit2.http.Url
 interface OverpassApi {
     @FormUrlEncoded
     @POST
-    suspend fun getCctvCameras(@Url url: String, @Field("data") query: String): OverpassResponse
+    suspend fun getCctvCamerasPost(@Url url: String, @Field("data") query: String): OverpassResponse
+
+    @GET
+    suspend fun getCctvCamerasGet(@Url url: String, @Query("data") query: String): OverpassResponse
 }
 
 data class OverpassResponse(

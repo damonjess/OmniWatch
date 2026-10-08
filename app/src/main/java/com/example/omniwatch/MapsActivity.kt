@@ -20,7 +20,9 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import coil.imageLoader
 import coil.load
+import coil.request.ImageRequest
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -112,9 +114,9 @@ class MapsActivity : AppCompatActivity() {
         mapView.setTileSource(OpenStreetMapTileSource)
         mapView.setMultiTouchControls(true)
         
-        // Move camera to a central UK location (e.g., London to see the JamCams immediately)
-        mapView.controller.setZoom(10.0)
-        mapView.controller.setCenter(GeoPoint(51.5072, -0.1276))
+        // Move camera to Scunthorpe / M180 junction area
+        mapView.controller.setZoom(12.0)
+        mapView.controller.setCenter(GeoPoint(53.58, -0.65))
 
         locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this), mapView)
         locationOverlay.enableMyLocation()
@@ -164,63 +166,137 @@ class MapsActivity : AppCompatActivity() {
     }
 
     private fun fetchLiveTrafficCameras() {
-        // 1. Build the Retrofit client targeted at the real traffic API
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://api.tfl.gov.uk") 
+        val client = OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .addInterceptor { chain ->
+                chain.proceed(
+                    chain.request().newBuilder()
+                        .header("User-Agent", AppUserAgent.value)
+                        .build()
+                )
+            }
+            .build()
+
+        val retrofitTfl = Retrofit.Builder()
+            .baseUrl("https://api.tfl.gov.uk")
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
-        val api = retrofit.create(TrafficCameraApi::class.java)
+        val tflApi = retrofitTfl.create(TrafficCameraApi::class.java)
 
-        // 2. Launch background coroutine to avoid freezing the UI
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val places = api.getLiveCameras()
-                
-                // 3. Map the raw JSON responses into your map ClusterItems
-                val trafficItems = places.mapNotNull { place ->
-                    // Find the property containing the actual live .jpg URL
-                    val imageUrlProp = place.additionalProperties?.find { it.key == "imageUrl" }
-                    
-                    if (imageUrlProp != null) {
-                        CctvClusterItem(
-                            lat = place.lat,
-                            lon = place.lon,
-                            titleStr = place.commonName,
-                            source = "TfL",
-                            operator = "TfL",
-                            type = "JamCam",
-                            snippet = imageUrlProp.value, // Storing the URL so the Bottom Sheet Coil loader finds it
-                            isTrafficCamera = true
+        val retrofitNh = Retrofit.Builder()
+            .baseUrl("https://webtris.nationalhighways.co.uk")
+            .client(
+                client.newBuilder()
+                    .addInterceptor { chain ->
+                        chain.proceed(
+                            chain.request().newBuilder()
+                                .header("Ocp-Apim-Subscription-Key", BuildConfig.TRAFFIC_API_KEY)
+                                .build()
                         )
-                    } else null
+                    }
+                    .build()
+            )
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val nhApi = retrofitNh.create(NationalHighwaysApi::class.java)
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            // Fetch live CCTV cameras with valid visual feeds (e.g., TfL JamCams)
+            try {
+                val tflPlaces = tflApi.getLiveCameras()
+                val tflEntities = tflPlaces.mapNotNull { place ->
+                    if (place.lat == 0.0 && place.lon == 0.0) return@mapNotNull null
+                    val imgUrl = place.additionalProperties?.firstOrNull {
+                        it.key.equals("imageUrl", ignoreCase = true) || it.key.equals("file", ignoreCase = true)
+                    }?.value
+
+                    // Enforce that a valid visual CCTV image feed URL exists (excludes non-visual sensors)
+                    if (imgUrl.isNullOrBlank()) return@mapNotNull null
+
+                    CameraEntity(
+                        id = "tfl_${place.commonName.hashCode()}_${place.lat}_${place.lon}",
+                        lat = place.lat,
+                        lon = place.lon,
+                        title = place.commonName.ifBlank { "TfL Traffic CCTV Camera" },
+                        operator = "Transport for London",
+                        type = "Traffic Camera",
+                        source = SOURCE_TRAFFIC,
+                        tagsJson = CameraTags.encode(
+                            buildMap {
+                                put("liveImageUrl", imgUrl)
+                                place.additionalProperties?.forEach { prop ->
+                                    if (prop.key.isNotBlank() && prop.value.isNotBlank()) {
+                                        put(prop.key, prop.value)
+                                    }
+                                }
+                            }
+                        ),
+                        isTrafficCamera = true
+                    )
                 }
 
-                // 4. Switch back to the Main thread to update the UI
-                withContext(Dispatchers.Main) {
-                    trafficOverlay.items.clear()
-                    trafficItems.forEach { item ->
-                        val geoPoint = GeoPoint(item.lat, item.lon)
-                        val marker = Marker(mapView).apply {
-                            position = geoPoint
-                            title = item.titleStr
-                            snippet = "${item.operator} - ${item.type}"
-                            icon = markerIcon(TRAFFIC_COLOR)
-                            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                            setOnMarkerClickListener { _, _ ->
-                                showCameraBottomSheet(item)
-                                true
-                            }
-                        }
-                        trafficOverlay.add(marker)
+                if (tflEntities.isNotEmpty()) {
+                    database.cameraDao().insertCameras(tflEntities)
+                    withContext(Dispatchers.Main) {
+                        refreshViewport(force = true)
                     }
-                    mapView.invalidate()
-                    // If you want to include these in the count view, you can adjust `renderedCount`, 
-                    // but the logic relies on `entities.size` in `showMarkers`. We'll just leave it for now.
                 }
-                
             } catch (e: Exception) {
-                e.printStackTrace() // Handle network drops or API rate limits
+                Log.w(TAG, "Failed to fetch live traffic cameras", e)
+            }
+
+            // Fetch National Highways traffic feeds (e.g., M180, M4, M25, M6)
+            try {
+                val nhResponse = nhApi.getWebtrisSites()
+                val nhEntities = nhResponse.sites.orEmpty().mapNotNull { site ->
+                    if (site.latitude == 0.0 && site.longitude == 0.0) return@mapNotNull null
+                    val title = site.description?.ifBlank { site.name } ?: site.name ?: "National Highways CCTV"
+                    
+                    // Drop any nodes that are just MIDAS or TMU sensors (non-camera traffic sensors)
+                    val isNotSensor = !title.contains("MIDAS", ignoreCase = true) &&
+                            !title.contains("TMU", ignoreCase = true) &&
+                            !(site.name?.contains("MIDAS", ignoreCase = true) == true) &&
+                            !(site.name?.contains("TMU", ignoreCase = true) == true) &&
+                            !(site.description?.contains("MIDAS", ignoreCase = true) == true) &&
+                            !(site.description?.contains("TMU", ignoreCase = true) == true)
+                    if (!isNotSensor) return@mapNotNull null
+
+                    val imageUrl = "https://cctv.trafficengland.com/feeds/cctv/${site.id}.jpg"
+                    if (imageUrl.isBlank()) return@mapNotNull null
+
+                    CameraEntity(
+                        id = "nh_${site.id}",
+                        lat = site.latitude,
+                        lon = site.longitude,
+                        title = title,
+                        operator = "National Highways",
+                        type = "Traffic Camera",
+                        source = "National Highways",
+                        tagsJson = CameraTags.encode(
+                            mapOf(
+                                "liveImageUrl" to imageUrl,
+                                "siteId" to site.id,
+                                "status" to (site.status ?: "Unknown")
+                            )
+                        ),
+                        isTrafficCamera = true
+                    )
+                }
+
+                if (nhEntities.isNotEmpty()) {
+                    database.cameraDao().clearNationalHighwaysCameras()
+                    database.cameraDao().clearSensorCameras()
+                    database.cameraDao().insertCameras(nhEntities)
+                    withContext(Dispatchers.Main) {
+                        refreshViewport(force = true)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to fetch National Highways traffic feeds", e)
             }
         }
     }
@@ -334,6 +410,7 @@ class MapsActivity : AppCompatActivity() {
         if (councilCameras.isNotEmpty()) {
             withContext(Dispatchers.IO) {
                 database.cameraDao().clearCouncilCameras()
+                database.cameraDao().clearSensorCameras()
                 database.cameraDao().insertCameras(councilCameras)
             }
         }
@@ -405,7 +482,8 @@ class MapsActivity : AppCompatActivity() {
     private suspend fun requestCameras(endpoint: String, query: String): List<CameraEntity>? {
         return try {
             val response = withContext(Dispatchers.IO) {
-                overpassApi.getCctvCameras(endpoint, query)
+                runCatching { overpassApi.getCctvCamerasPost(endpoint, query) }
+                    .getOrElse { overpassApi.getCctvCamerasGet(endpoint, query) }
             }
 
             // A remark means the server rejected or could not finish the query.
@@ -438,15 +516,25 @@ class MapsActivity : AppCompatActivity() {
         val longitude = lon ?: center?.lon ?: return null
         val tags = tags.orEmpty()
 
+        val typeStr = tags["surveillance:type"] ?: tags["camera:type"] ?: tags["highway"] ?: tags["man_made"] ?: UNKNOWN_TYPE
+        val isTraffic = tags["highway"] == "speed_camera" ||
+                tags["enforcement"] == "speed_camera" ||
+                typeStr.contains("speed", ignoreCase = true) ||
+                typeStr.contains("traffic", ignoreCase = true) ||
+                tags["surveillance:type"]?.contains("traffic", ignoreCase = true) == true ||
+                tags["camera:type"]?.contains("traffic", ignoreCase = true) == true ||
+                tags["surveillance:kind"]?.contains("traffic", ignoreCase = true) == true
+
         return CameraEntity(
             id = "osm_$id",
             lat = latitude,
             lon = longitude,
             title = tags["name"] ?: DEFAULT_CAMERA_TITLE,
             operator = tags["operator"] ?: UNKNOWN_OPERATOR,
-            type = tags["surveillance:type"] ?: tags["camera:type"] ?: UNKNOWN_TYPE,
+            type = typeStr,
             source = SOURCE_OVERPASS,
             tagsJson = CameraTags.encode(tags),
+            isTrafficCamera = isTraffic,
         )
     }
 
@@ -478,38 +566,61 @@ class MapsActivity : AppCompatActivity() {
         fovOverlay.items.clear()
         osmOverlay.items.clear()
         councilOverlay.items.clear()
+        trafficOverlay.items.clear()
 
-        entities.forEach { entity ->
-            val item = entity.toClusterItem()
-            val geoPoint = GeoPoint(item.lat, item.lon)
+        val nodes = entities.map { entity ->
+            val node = entity.toNode()
+            val geoPoint = GeoPoint(node.lat, node.lon)
 
             // Render field-of-view (FOV) cone if camera direction is provided in tags
-            parseDirection(item.tags)?.let { azimuth ->
+            parseDirection(node.tags)?.let { azimuth ->
                 val fovPolygon = drawFovCone(geoPoint, azimuth)
                 fovOverlay.add(fovPolygon)
             }
 
-            val isCouncil = item.source == CouncilDataLoader.SOURCE_COUNCIL
-            val marker = Marker(mapView).apply {
-                position = geoPoint
-                title = item.titleStr
-                snippet = "${item.operator} - ${item.type}"
-                icon = markerIcon(if (isCouncil) COUNCIL_COLOR else MARKER_COLOR)
+            node
+        }
+
+        renderCamerasToMap(nodes)
+
+        renderedCount = entities.size
+        updateCountView()
+    }
+
+    /**
+     * Centralized routing function that creates osmdroid Markers, assigns the icon color
+     * based on camera type/source, and routes each marker to the appropriate FolderOverlay.
+     */
+    private fun renderCamerasToMap(nodes: List<CctvNode>) {
+        nodes.forEach { node ->
+            Marker(mapView).apply {
+                position = GeoPoint(node.lat, node.lon)
+                title = node.titleStr
+                snippet = if (node.operator.isNotBlank() || node.type.isNotBlank()) "${node.operator} - ${node.type}" else ""
+
+                when {
+                    node.isTrafficCamera -> {
+                        icon = markerIcon(TRAFFIC_COLOR)
+                        trafficOverlay.add(this)
+                    }
+                    node.isCouncil -> {
+                        icon = markerIcon(COUNCIL_COLOR)
+                        councilOverlay.add(this)
+                    }
+                    else -> {
+                        icon = markerIcon(MARKER_COLOR)
+                        osmOverlay.add(this)
+                    }
+                }
+
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                 setOnMarkerClickListener { _, _ ->
-                    showCameraBottomSheet(item)
+                    showCameraBottomSheet(node)
                     true
                 }
             }
-            if (isCouncil) {
-                councilOverlay.add(marker)
-            } else {
-                osmOverlay.add(marker)
-            }
         }
         mapView.invalidate()
-        renderedCount = entities.size
-        updateCountView()
     }
 
     /** Extracts camera direction angle in degrees from tags if present. */
@@ -604,24 +715,36 @@ class MapsActivity : AppCompatActivity() {
         cameraCountView.text = summary + suffix
     }
 
-    private fun showCameraBottomSheet(item: CctvClusterItem) {
+    private fun showCameraBottomSheet(node: CctvNode) {
         val bottomSheetDialog = BottomSheetDialog(this)
         
-        if (item.isTrafficCamera) {
+        if (node.isTrafficCamera) {
             val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_camera, null)
             val tvLocation = view.findViewById<TextView>(R.id.tvCameraLocation)
             val ivFeed = view.findViewById<ImageView>(R.id.ivCameraFeed)
             val tvLiveIndicator = view.findViewById<TextView>(R.id.tvLiveIndicator)
 
-            tvLocation.text = item.titleStr
+            tvLocation.text = node.titleStr
 
-            if (item.snippet.isNotBlank()) {
-                val urlToLoad = if (item.snippet.startsWith("http")) item.snippet else "https://api.tfl.gov.uk${item.snippet}"
-                ivFeed.load(urlToLoad) {
-                    crossfade(true)
-                    placeholder(android.R.drawable.ic_menu_report_image)
-                    error(android.R.drawable.ic_delete)
+            if (!node.imageUrl.isNullOrBlank()) {
+                // Fix missing protocols from the API response
+                val fixedUrl = if (node.imageUrl.startsWith("//")) {
+                    "https:${node.imageUrl}"
+                } else {
+                    node.imageUrl
                 }
+
+                val request = ImageRequest.Builder(this)
+                    .data(fixedUrl)
+                    .crossfade(true)
+                    .addHeader("User-Agent", "Mozilla/5.0")
+                    .addHeader("Ocp-Apim-Subscription-Key", BuildConfig.TRAFFIC_API_KEY)
+                    .placeholder(android.R.drawable.ic_menu_report_image)
+                    .error(android.R.drawable.ic_delete)
+                    .target(ivFeed)
+                    .build()
+
+                ivFeed.context.imageLoader.enqueue(request)
                 tvLiveIndicator.visibility = View.VISIBLE
             } else {
                 ivFeed.setImageResource(android.R.drawable.ic_menu_camera)
@@ -638,15 +761,15 @@ class MapsActivity : AppCompatActivity() {
             val tagContainer = view.findViewById<LinearLayout>(R.id.tagContainer)
             val btnVerifyImagery = view.findViewById<MaterialButton>(R.id.btnVerifyImagery)
 
-            tvSource.text = item.source
-            tvTitle.text = item.titleStr
-            tvOperator.text = getString(R.string.camera_operator, item.operator)
-            tvType.text = getString(R.string.camera_type, item.type)
-            tvCoordinates.text = getString(R.string.camera_coordinates, item.lat, item.lon)
+            tvSource.text = node.source
+            tvTitle.text = node.titleStr
+            tvOperator.text = getString(R.string.camera_operator, node.operator)
+            tvType.text = getString(R.string.camera_type, node.type)
+            tvCoordinates.text = getString(R.string.camera_coordinates, node.lat, node.lon)
 
             tagContainer.removeAllViews()
-            if (item.tags.isNotEmpty()) {
-                item.tags.forEach { (key, value) ->
+            if (node.tags.isNotEmpty()) {
+                node.tags.forEach { (key, value) ->
                     val tagView = TextView(this).apply {
                         text = getString(R.string.attribute_row, key, value)
                         textSize = 14f
@@ -661,14 +784,14 @@ class MapsActivity : AppCompatActivity() {
 
             btnVerifyImagery.setOnClickListener {
                 // Open street imagery map or street view based on lat/lon
-                val uri = Uri.parse("google.streetview:cbll=${item.lat},${item.lon}")
+                val uri = Uri.parse("google.streetview:cbll=${node.lat},${node.lon}")
                 val intent = Intent(Intent.ACTION_VIEW, uri)
                 intent.setPackage("com.google.android.apps.maps")
                 if (intent.resolveActivity(packageManager) != null) {
                     startActivity(intent)
                 } else {
                     // Fallback to browser
-                    val browserUri = Uri.parse("https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${item.lat},${item.lon}")
+                    val browserUri = Uri.parse("https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${node.lat},${node.lon}")
                     startActivity(Intent(Intent.ACTION_VIEW, browserUri))
                 }
             }
@@ -716,15 +839,16 @@ class MapsActivity : AppCompatActivity() {
     }
 
     private fun BoundingBox.toViewportBounds(): ViewportBounds = ViewportBounds(
-        north = latNorth,
-        east = lonEast,
-        south = latSouth,
-        west = lonWest,
+        north = maxOf(latNorth, latSouth),
+        east = maxOf(lonEast, lonWest),
+        south = minOf(latNorth, latSouth),
+        west = minOf(lonEast, lonWest),
     )
 
     private companion object {
         const val TAG = "MapsActivity"
         const val SOURCE_OVERPASS = "OVERPASS"
+        const val SOURCE_TRAFFIC = "TRAFFIC"
         const val DEFAULT_CAMERA_TITLE = "CCTV Camera"
         const val UNKNOWN_OPERATOR = "Unknown Operator"
         const val UNKNOWN_TYPE = "Unknown Type"
@@ -734,13 +858,11 @@ class MapsActivity : AppCompatActivity() {
          * can succeed while another 500s or 504s.
          */
         val OVERPASS_ENDPOINTS = listOf(
-            "https://overpass-api.de/api/interpreter",
             "https://lz4.overpass-api.de/api/interpreter",
+            "https://z.overpass-api.de/api/interpreter",
+            "https://overpass-api.de/api/interpreter",
             "https://overpass.kumi.systems/api/interpreter",
             "https://overpass.private.coffee/api/interpreter",
-            "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-            "https://overpass.openstreetmap.fr/api/interpreter",
-            "https://z.overpass-api.de/api/interpreter",
         )
 
         const val MARKER_SIZE_DP = 16
