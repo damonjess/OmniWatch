@@ -35,7 +35,7 @@ class PublicWebcamDataLoaderTest {
         val type = object : TypeToken<List<WebcamRecord>>() {}.type
         val records: List<WebcamRecord> = Gson().fromJson(requireNotNull(asset).readText(), type)
 
-        assertEquals("Expected 14 webcams in expanded catalogue", 14, records.size)
+        assertEquals("Expected 22 webcams in expanded catalogue", 22, records.size)
 
         val ids = records.map { it.id }
         assertTrue("Eernewoude HLS webcam missing", ids.contains("public-webcam-eernewoude-princenhof"))
@@ -52,11 +52,19 @@ class PublicWebcamDataLoaderTest {
         assertTrue("Porlock Weir webcam missing", ids.contains("public-webcam-porlock-weir"))
         assertTrue("Hereford webcam missing", ids.contains("public-webcam-hereford-high-town"))
         assertTrue("Cardiff webcam missing", ids.contains("public-webcam-cardiff-st-mary-street"))
+        assertTrue("St Ives Porthmeor webcam missing", ids.contains("public-webcam-st-ives-porthmeor-beach"))
+        assertTrue("Newport Pembrokeshire webcam missing", ids.contains("public-webcam-newport-pembrokeshire"))
+        assertTrue("Barmouth Bay webcam missing", ids.contains("public-webcam-barmouth-bay-llanaber"))
+        assertTrue("Barmouth Beach webcam missing", ids.contains("public-webcam-barmouth-beach"))
+        assertTrue("Hawes webcam missing", ids.contains("public-webcam-hawes-yorkshire-dales"))
+        assertTrue("River Wye webcam missing", ids.contains("public-webcam-river-wye-hereford"))
+        assertTrue("Sutton Coldfield webcam missing", ids.contains("public-webcam-sutton-coldfield"))
+        assertTrue("Bala Gwynedd webcam missing", ids.contains("public-webcam-bala-gwynedd"))
 
         // SkylineWebcams hides its playlist behind a page, so these entries must stay marked
         // SKYLINE with the operator page as the stream URL for the resolver to find a feed.
         val skyline = records.filter { it.streamType.equals("SKYLINE", ignoreCase = true) }
-        assertEquals("Expected 10 SkylineWebcams entries marked SKYLINE", 10, skyline.size)
+        assertEquals("Expected 18 SkylineWebcams entries marked SKYLINE", 18, skyline.size)
         skyline.forEach { record ->
             assertTrue(
                 "Skyline entry ${record.id} must point at a resolvable operator page",

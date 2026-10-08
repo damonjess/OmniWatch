@@ -60,3 +60,13 @@ The M180 camera record `21020` currently resolves to:
 `https://public.highwaystrafficcameras.co.uk/cctvpublicaccess/images/21020.jpg`
 
 The endpoint returned HTTP 200 with `image/jpeg` during verification.
+
+## TrafficVision UK/Ireland catalogue
+
+- Added a filtered `trafficvision_uk_ie.json` asset from TrafficVision.Live's public catalogue.
+- The asset contains 5,717 records: 5,431 United Kingdom and 286 Ireland cameras.
+- TrafficVision markers use a gold/yellow marker (`#F9A825`) and the legend label `TrafficVision UK/Ireland`.
+- Image and hybrid feeds open in the existing in-app live-image sheet. Other feed metadata is retained in the detail card for future provider-specific playback support.
+- Only UK and Ireland records are bundled; the worldwide catalogue is not loaded into the APK.
+- Source: `https://trafficvision.live/`
+- The filtered catalogue was generated from TrafficVision's public catalogue manifest and shards on 2026-10-08.

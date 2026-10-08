@@ -88,6 +88,7 @@ class MapsActivity : AppCompatActivity() {
     private lateinit var walesOverlay: FolderOverlay
     private lateinit var niOverlay: FolderOverlay
     private lateinit var essexOverlay: FolderOverlay
+    private lateinit var trafficVisionOverlay: FolderOverlay
     private lateinit var webcamOverlay: FolderOverlay
     private lateinit var cameraCountView: TextView
     private lateinit var legendView: TextView
@@ -96,6 +97,7 @@ class MapsActivity : AppCompatActivity() {
     /** The bundled council dataset is read from assets once per process. */
     private var councilLoaded = false
     private var webcamLoaded = false
+    private var trafficVisionLoaded = false
     private var activeWebcamPlayer: ExoPlayer? = null
 
     private var fetchJob: Job? = null
@@ -174,6 +176,7 @@ class MapsActivity : AppCompatActivity() {
         walesOverlay = FolderOverlay()
         niOverlay = FolderOverlay()
         essexOverlay = FolderOverlay()
+        trafficVisionOverlay = FolderOverlay()
         webcamOverlay = FolderOverlay()
         mapView.overlays.add(fovOverlay)
         mapView.overlays.add(osmOverlay)
@@ -183,6 +186,7 @@ class MapsActivity : AppCompatActivity() {
         mapView.overlays.add(walesOverlay)
         mapView.overlays.add(niOverlay)
         mapView.overlays.add(essexOverlay)
+        mapView.overlays.add(trafficVisionOverlay)
         mapView.overlays.add(webcamOverlay)
 
         // Panning or zooming re-queries only the area that came into view. The delay folds a
@@ -398,6 +402,7 @@ class MapsActivity : AppCompatActivity() {
         fetchJob = lifecycleScope.launch {
             ensureCouncilData()
             ensurePublicWebcamData()
+            ensureTrafficVisionData()
             renderViewport(bounds)
 
             // Cleared first so the header never shows a reason left over from an earlier viewport.
@@ -455,6 +460,20 @@ class MapsActivity : AppCompatActivity() {
             }
         }
         webcamLoaded = true
+    }
+
+    private suspend fun ensureTrafficVisionData() {
+        if (trafficVisionLoaded) return
+        val cameras = withContext(Dispatchers.IO) {
+            TrafficVisionDataLoader.loadFromAssets(this@MapsActivity)
+        }
+        if (cameras.isNotEmpty()) {
+            withContext(Dispatchers.IO) {
+                database.cameraDao().clearTrafficVisionCameras()
+                database.cameraDao().insertCameras(cameras)
+            }
+        }
+        trafficVisionLoaded = true
     }
 
     private suspend fun renderViewport(bounds: ViewportBounds) {
@@ -629,6 +648,7 @@ class MapsActivity : AppCompatActivity() {
         walesOverlay.items.clear()
         niOverlay.items.clear()
         essexOverlay.items.clear()
+        trafficVisionOverlay.items.clear()
         webcamOverlay.items.clear()
 
         val nodes = entities.map { entity ->
@@ -676,6 +696,10 @@ class MapsActivity : AppCompatActivity() {
                     node.source == SOURCE_ESSEX_HIGHWAYS -> {
                         icon = markerIcon(ESSEX_COLOR)
                         essexOverlay.add(this)
+                    }
+                    node.source == SOURCE_TRAFFICVISION -> {
+                        icon = markerIcon(TRAFFICVISION_COLOR)
+                        trafficVisionOverlay.add(this)
                     }
                     node.isTrafficCamera -> {
                         icon = markerIcon(TRAFFIC_COLOR)
@@ -792,218 +816,237 @@ class MapsActivity : AppCompatActivity() {
     private fun showCameraBottomSheet(node: CctvNode) {
         val bottomSheetDialog = BottomSheetDialog(this)
 
-        if (node.isWebcam && canPlayWebcamLive(node)) {
-            // Direct playlists and SkylineWebcams pages both play in the in-app ExoPlayer, so the
-            // operator's page, adverts and consent banners never take over the sheet.
+        if (canPlayWebcamLive(node)) {
             showLiveWebcamSheet(bottomSheetDialog, node)
-        } else if (node.isWebcam && hasEmbeddableWebcamPage(node)) {
-            val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_webcam_external, null)
-            val tvStatus = view.findViewById<TextView>(R.id.tvExternalWebcamStatus)
-            view.findViewById<TextView>(R.id.tvExternalWebcamSource).text = "PUBLIC WEBCAM • ${node.streamType ?: "WEB"}"
-            view.findViewById<TextView>(R.id.tvExternalWebcamTitle).text = node.titleStr
-            val webcamView = view.findViewById<WebView>(R.id.webcamWebView)
-            webcamView.settings.javaScriptEnabled = true
-            webcamView.settings.domStorageEnabled = true
-            webcamView.settings.mediaPlaybackRequiresUserGesture = false
-            webcamView.settings.loadWithOverviewMode = false
-            webcamView.settings.useWideViewPort = false
-
-            val hideClutterJs = """
-                (function() {
-                    function cleanWebcamPage() {
-                        try {
-                            var meta = document.querySelector('meta[name="viewport"]');
-                            if (!meta) {
-                                meta = document.createElement('meta');
-                                meta.name = 'viewport';
-                                (document.head || document.documentElement).appendChild(meta);
-                            }
-                            meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-                        } catch(e) {}
-
-                        try {
-                            var btns = document.querySelectorAll('.fc-cta-consent, .fc-primary-button, .fc-button, .qc-cmp2-summary-section button, button[mode="primary"], .qc-cmp2-btn[mode="primary"], #qc-cmp2-ui button, button[class*="consent"], button[class*="accept"]');
-                            for (var i = 0; i < btns.length; i++) {
-                                btns[i].click();
-                            }
-                        } catch(e) {}
-
-                        var styleId = 'omniwatch-webcam-cleaner';
-                        if (!document.getElementById(styleId)) {
-                            var style = document.createElement('style');
-                            style.id = styleId;
-                            style.innerHTML = '.fc-consent-root, #fc-consent-root, .fc-dialog-overlay, .fc-dialog-container, div[class*="fc-"], div[id*="fc-"], ' +
-                                '#qc-cmp2-container, .qc-cmp2-container, [id*="qc-cmp"], [class*="qc-cmp"], #qc-cmp2-ui, ' +
-                                'iframe[title*="consent"], iframe[src*="consent"], iframe[src*="fundingchoices"], #onetrust-consent-sdk, .cc-window, ' +
-                                'header, footer, nav, .header, .footer, .navbar, .breadcrumb, .adsbygoogle, .cam-vert, .wa, ' +
-                                '.descr, #skw-wall, .sidebar, .comments, .skw-header, .skw-footer, .skw-nav, .skw-sidebar, ' +
-                                'div[class*="ad-"], div[id*="ad-"], .social-share, .related-cams { ' +
-                                'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; } ' +
-                                'html, body { background: #000000 !important; margin: 0 !important; padding: 0 !important; width: 100% !important; height: 100% !important; } ' +
-                                '#skylinewebcams, #webcam, #live, .embed-responsive, video, ' +
-                                'iframe[src*="youtube"], iframe[src*="twitch"], iframe[src*="player"], .player-container, .video-container { ' +
-                                'display: block !important; width: 100% !important; height: 100% !important; min-height: 280px !important; max-width: 100% !important; max-height: 100% !important; ' +
-                                'position: relative !important; top: 0 !important; left: 0 !important; margin: 0 auto !important; padding: 0 !important; border: none !important; object-fit: contain !important; z-index: 9999999 !important; }';
-                            var targetHead = document.head || document.documentElement;
-                            if (targetHead) {
-                                targetHead.appendChild(style);
-                            }
-                        }
-
-                        var v = document.querySelector('video');
-                        if (v && v.paused) {
-                            v.play().catch(function(e){});
-                        }
-                    }
-
-                    cleanWebcamPage();
-                    if (!window.__omniwatchTimer) {
-                        window.__omniwatchTimer = setInterval(cleanWebcamPage, 300);
-                    }
-                })();
-            """.trimIndent()
-
-            webcamView.webViewClient = object : WebViewClient() {
-                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                    return false
-                }
-
-                override fun onReceivedError(
-                    view: WebView?,
-                    request: WebResourceRequest?,
-                    error: android.webkit.WebResourceError?,
-                ) {
-                    super.onReceivedError(view, request, error)
-                    // Only a failed main page is worth reporting; embedded ads and images fail
-                    // constantly and do not mean the camera is unavailable.
-                    if (request?.isForMainFrame != true) return
-                    tvStatus.text = getString(R.string.webcam_page_unavailable)
-                    tvStatus.visibility = View.VISIBLE
-                }
-
-                override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): android.webkit.WebResourceResponse? {
-                    val urlStr = request?.url?.toString() ?: ""
-                    if (urlStr.contains("fundingchoicesmessages.google.com") ||
-                        urlStr.contains("quantcast.com") ||
-                        urlStr.contains("consensu.org") ||
-                        urlStr.contains("cookie-script.com") ||
-                        urlStr.contains("onetrust.com") ||
-                        urlStr.contains("cookiebot.com") ||
-                        urlStr.contains("cmp.quantcast.com") ||
-                        urlStr.contains("fundingchoices")) {
-                        return android.webkit.WebResourceResponse("text/plain", "UTF-8", java.io.ByteArrayInputStream(ByteArray(0)))
-                    }
-                    return super.shouldInterceptRequest(view, request)
-                }
-
-                override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
-                    super.onPageStarted(view, url, favicon)
-                    tvStatus.visibility = View.GONE
-                    view?.evaluateJavascript(hideClutterJs, null)
-                }
-
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    super.onPageFinished(view, url)
-                    view?.evaluateJavascript(hideClutterJs, null)
-                }
-            }
-
-            webcamView.webChromeClient = object : android.webkit.WebChromeClient() {
-                override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                    super.onProgressChanged(view, newProgress)
-                    if (newProgress > 10) {
-                        view?.evaluateJavascript(hideClutterJs, null)
-                    }
-                }
-            }
-
-            // Only a real web address reaches the WebView. An OpenStreetMap tag such as `CPE510`
-            // or a cleartext snapshot URL would otherwise render Chromium's own error page, which
-            // reads as the camera being broken rather than the link being unusable.
-            val pageUrl = WebcamPages.embeddableUrl(node.streamUrl ?: node.websiteUrl)
-            if (pageUrl != null) {
-                val extraHeaders = mutableMapOf("Referer" to "https://www.cmassets.co.uk/")
-                webcamView.loadUrl(toEmbeddedWebcamUrl(pageUrl), extraHeaders)
-            }
-            bottomSheetDialog.setOnDismissListener {
-                webcamView.stopLoading()
-                webcamView.destroy()
-            }
-            bottomSheetDialog.setContentView(view)
-        } else if (node.isTrafficCamera && !node.imageUrl.isNullOrBlank()) {
-            val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_camera, null)
-            val tvLocation = view.findViewById<TextView>(R.id.tvCameraLocation)
-            val ivFeed = view.findViewById<ImageView>(R.id.ivCameraFeed)
-            val tvLiveIndicator = view.findViewById<TextView>(R.id.tvLiveIndicator)
-
-            tvLocation.text = node.titleStr
-
-            val url = node.imageUrl
-            val secureUrl = when {
-                url.startsWith("http://", ignoreCase = true) -> url.replace("http://", "https://", ignoreCase = true)
-                url.startsWith("//") -> "https:$url"
-                else -> url
-            }
-
-            val request = ImageRequest.Builder(this)
-                .data(secureUrl)
-                .crossfade(true)
-                .addHeader("User-Agent", "Mozilla/5.0")
-                .addHeader("Ocp-Apim-Subscription-Key", BuildConfig.TRAFFIC_API_KEY)
-                .placeholder(android.R.drawable.ic_menu_report_image)
-                .error(android.R.drawable.ic_delete)
-                .target(ivFeed)
-                .build()
-
-            ivFeed.context.imageLoader.enqueue(request)
-            tvLiveIndicator.visibility = View.VISIBLE
-            bottomSheetDialog.setContentView(view)
+        } else if ((node.isWebcam || node.imageUrl.isNullOrBlank()) && hasEmbeddableWebcamPage(node)) {
+            showExternalWebcamSheet(bottomSheetDialog, node)
+        } else if (!node.imageUrl.isNullOrBlank()) {
+            showTrafficCameraSheet(bottomSheetDialog, node)
+        } else if (hasEmbeddableWebcamPage(node)) {
+            showExternalWebcamSheet(bottomSheetDialog, node)
         } else {
-            val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_camera_detail, null)
-            val tvSource = view.findViewById<TextView>(R.id.tvCameraSource)
-            val tvTitle = view.findViewById<TextView>(R.id.tvCameraTitle)
-            val tvOperator = view.findViewById<TextView>(R.id.tvOperator)
-            val tvType = view.findViewById<TextView>(R.id.tvType)
-            val tvCoordinates = view.findViewById<TextView>(R.id.tvCoordinates)
-            val tagContainer = view.findViewById<LinearLayout>(R.id.tagContainer)
-            val btnVerifyImagery = view.findViewById<MaterialButton>(R.id.btnVerifyImagery)
-
-            tvSource.text = node.source.ifBlank { "TRAFFIC SENSOR" }
-            tvTitle.text = node.titleStr
-            tvOperator.text = getString(R.string.camera_operator, node.operator.ifBlank { "National Highways" })
-            tvType.text = getString(R.string.camera_type, node.type.ifBlank { "MIDAS Traffic Sensor" })
-            tvCoordinates.text = getString(R.string.camera_coordinates, node.lat, node.lon)
-
-            tagContainer.removeAllViews()
-            if (node.tags.isNotEmpty()) {
-                node.tags.forEach { (key, value) ->
-                    val tagView = TextView(this).apply {
-                        text = getString(R.string.attribute_row, key, value)
-                        textSize = 14f
-                        setTextColor(android.graphics.Color.parseColor("#CBD5E1"))
-                        setPadding(0, 4, 0, 4)
-                    }
-                    tagContainer.addView(tagView)
-                }
-            } else {
-                view.findViewById<TextView>(R.id.tvAllTags)?.visibility = View.GONE
-            }
-
-            btnVerifyImagery.setOnClickListener {
-                val uri = Uri.parse("google.streetview:cbll=${node.lat},${node.lon}")
-                val intent = Intent(Intent.ACTION_VIEW, uri)
-                intent.setPackage("com.google.android.apps.maps")
-                if (intent.resolveActivity(packageManager) != null) {
-                    startActivity(intent)
-                } else {
-                    val browserUri = Uri.parse("https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${node.lat},${node.lon}")
-                    startActivity(Intent(Intent.ACTION_VIEW, browserUri))
-                }
-            }
-            bottomSheetDialog.setContentView(view)
+            showDetailSheet(bottomSheetDialog, node)
         }
 
         bottomSheetDialog.show()
+    }
+
+    private fun showExternalWebcamSheet(bottomSheetDialog: BottomSheetDialog, node: CctvNode) {
+        val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_webcam_external, null)
+        val tvStatus = view.findViewById<TextView>(R.id.tvExternalWebcamStatus)
+        val sourceLabel = if (node.source.isNotBlank()) node.source.uppercase() else "LIVE WEBCAM"
+        view.findViewById<TextView>(R.id.tvExternalWebcamSource).text = "$sourceLabel • ${node.streamType ?: "WEB"}"
+        view.findViewById<TextView>(R.id.tvExternalWebcamTitle).text = node.titleStr
+        val webcamView = view.findViewById<WebView>(R.id.webcamWebView)
+        webcamView.settings.javaScriptEnabled = true
+        webcamView.settings.domStorageEnabled = true
+        webcamView.settings.mediaPlaybackRequiresUserGesture = false
+        webcamView.settings.loadWithOverviewMode = false
+        webcamView.settings.useWideViewPort = false
+
+        val hideClutterJs = """
+            (function() {
+                function cleanWebcamPage() {
+                    try {
+                        var meta = document.querySelector('meta[name="viewport"]');
+                        if (!meta) {
+                            meta = document.createElement('meta');
+                            meta.name = 'viewport';
+                            (document.head || document.documentElement).appendChild(meta);
+                        }
+                        meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+                    } catch(e) {}
+
+                    try {
+                        var btns = document.querySelectorAll('.fc-cta-consent, .fc-primary-button, .fc-button, .qc-cmp2-summary-section button, button[mode="primary"], .qc-cmp2-btn[mode="primary"], #qc-cmp2-ui button, button[class*="consent"], button[class*="accept"]');
+                        for (var i = 0; i < btns.length; i++) {
+                            btns[i].click();
+                        }
+                    } catch(e) {}
+
+                    var styleId = 'omniwatch-webcam-cleaner';
+                    if (!document.getElementById(styleId)) {
+                        var style = document.createElement('style');
+                        style.id = styleId;
+                        style.innerHTML = '.fc-consent-root, #fc-consent-root, .fc-dialog-overlay, .fc-dialog-container, div[class*="fc-"], div[id*="fc-"], ' +
+                            '#qc-cmp2-container, .qc-cmp2-container, [id*="qc-cmp"], [class*="qc-cmp"], #qc-cmp2-ui, ' +
+                            'iframe[title*="consent"], iframe[src*="consent"], iframe[src*="fundingchoices"], #onetrust-consent-sdk, .cc-window, ' +
+                            'header, footer, nav, .header, .footer, .navbar, .breadcrumb, .adsbygoogle, .cam-vert, .wa, ' +
+                            '.descr, #skw-wall, .sidebar, .comments, .skw-header, .skw-footer, .skw-nav, .skw-sidebar, ' +
+                            'div[class*="ad-"], div[id*="ad-"], .social-share, .related-cams { ' +
+                            'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; } ' +
+                            'html, body { background: #000000 !important; margin: 0 !important; padding: 0 !important; width: 100% !important; height: 100% !important; } ' +
+                            '#skylinewebcams, #webcam, #live, .embed-responsive, video, ' +
+                            'iframe[src*="youtube"], iframe[src*="twitch"], iframe[src*="player"], .player-container, .video-container { ' +
+                            'display: block !important; width: 100% !important; height: 100% !important; min-height: 280px !important; max-width: 100% !important; max-height: 100% !important; ' +
+                            'position: relative !important; top: 0 !important; left: 0 !important; margin: 0 auto !important; padding: 0 !important; border: none !important; object-fit: contain !important; z-index: 9999999 !important; }';
+                        var targetHead = document.head || document.documentElement;
+                        if (targetHead) {
+                            targetHead.appendChild(style);
+                        }
+                    }
+
+                    var v = document.querySelector('video');
+                    if (v && v.paused) {
+                        v.play().catch(function(e){});
+                    }
+                }
+
+                cleanWebcamPage();
+                if (!window.__omniwatchTimer) {
+                    window.__omniwatchTimer = setInterval(cleanWebcamPage, 300);
+                }
+            })();
+        """.trimIndent()
+
+        webcamView.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                return false
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: android.webkit.WebResourceError?,
+            ) {
+                super.onReceivedError(view, request, error)
+                if (request?.isForMainFrame != true) return
+                tvStatus.text = getString(R.string.webcam_page_unavailable)
+                tvStatus.visibility = View.VISIBLE
+            }
+
+            override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): android.webkit.WebResourceResponse? {
+                val urlStr = request?.url?.toString() ?: ""
+                if (urlStr.contains("fundingchoicesmessages.google.com") ||
+                    urlStr.contains("quantcast.com") ||
+                    urlStr.contains("consensu.org") ||
+                    urlStr.contains("cookie-script.com") ||
+                    urlStr.contains("onetrust.com") ||
+                    urlStr.contains("cookiebot.com") ||
+                    urlStr.contains("cmp.quantcast.com") ||
+                    urlStr.contains("fundingchoices")) {
+                    return android.webkit.WebResourceResponse("text/plain", "UTF-8", java.io.ByteArrayInputStream(ByteArray(0)))
+                }
+                return super.shouldInterceptRequest(view, request)
+            }
+
+            override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+                tvStatus.visibility = View.GONE
+                view?.evaluateJavascript(hideClutterJs, null)
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                view?.evaluateJavascript(hideClutterJs, null)
+            }
+        }
+
+        webcamView.webChromeClient = object : android.webkit.WebChromeClient() {
+            override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                super.onProgressChanged(view, newProgress)
+                if (newProgress > 10) {
+                    view?.evaluateJavascript(hideClutterJs, null)
+                }
+            }
+        }
+
+        val pageUrl = WebcamPages.embeddableUrl(node.streamUrl ?: node.websiteUrl)
+        if (pageUrl != null) {
+            val referer = if (pageUrl.contains("trafficvision", ignoreCase = true) || node.source == SOURCE_TRAFFICVISION) {
+                "https://trafficvision.live/"
+            } else {
+                "https://www.cmassets.co.uk/"
+            }
+            val extraHeaders = mutableMapOf("Referer" to referer)
+            webcamView.loadUrl(toEmbeddedWebcamUrl(pageUrl), extraHeaders)
+        }
+        bottomSheetDialog.setOnDismissListener {
+            webcamView.stopLoading()
+            webcamView.destroy()
+        }
+        bottomSheetDialog.setContentView(view)
+    }
+
+    private fun showTrafficCameraSheet(bottomSheetDialog: BottomSheetDialog, node: CctvNode) {
+        val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_camera, null)
+        val tvLocation = view.findViewById<TextView>(R.id.tvCameraLocation)
+        val ivFeed = view.findViewById<ImageView>(R.id.ivCameraFeed)
+        val tvLiveIndicator = view.findViewById<TextView>(R.id.tvLiveIndicator)
+
+        tvLocation.text = node.titleStr
+
+        val url = node.imageUrl.orEmpty()
+        val secureUrl = when {
+            url.startsWith("http://", ignoreCase = true) -> url.replace("http://", "https://", ignoreCase = true)
+            url.startsWith("//") -> "https:$url"
+            else -> url
+        }
+
+        val requestBuilder = ImageRequest.Builder(this)
+            .data(secureUrl)
+            .crossfade(true)
+            .addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+            .addHeader("Referer", "https://trafficvision.live/")
+
+        if (node.source == SOURCE_NATIONAL_HIGHWAYS || secureUrl.contains("amazonaws.com") || secureUrl.contains("highwaystrafficcameras.co.uk")) {
+            requestBuilder.addHeader("Ocp-Apim-Subscription-Key", BuildConfig.TRAFFIC_API_KEY)
+        }
+
+        val request = requestBuilder
+            .placeholder(android.R.drawable.ic_menu_report_image)
+            .error(android.R.drawable.ic_delete)
+            .target(ivFeed)
+            .build()
+
+        ivFeed.context.imageLoader.enqueue(request)
+        tvLiveIndicator.visibility = View.VISIBLE
+        bottomSheetDialog.setContentView(view)
+    }
+
+    private fun showDetailSheet(bottomSheetDialog: BottomSheetDialog, node: CctvNode) {
+        val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_camera_detail, null)
+        val tvSource = view.findViewById<TextView>(R.id.tvCameraSource)
+        val tvTitle = view.findViewById<TextView>(R.id.tvCameraTitle)
+        val tvOperator = view.findViewById<TextView>(R.id.tvOperator)
+        val tvType = view.findViewById<TextView>(R.id.tvType)
+        val tvCoordinates = view.findViewById<TextView>(R.id.tvCoordinates)
+        val tagContainer = view.findViewById<LinearLayout>(R.id.tagContainer)
+        val btnVerifyImagery = view.findViewById<MaterialButton>(R.id.btnVerifyImagery)
+
+        tvSource.text = node.source.ifBlank { "TRAFFIC SENSOR" }
+        tvTitle.text = node.titleStr
+        tvOperator.text = getString(R.string.camera_operator, node.operator.ifBlank { "National Highways" })
+        tvType.text = getString(R.string.camera_type, node.type.ifBlank { "MIDAS Traffic Sensor" })
+        tvCoordinates.text = getString(R.string.camera_coordinates, node.lat, node.lon)
+
+        tagContainer.removeAllViews()
+        if (node.tags.isNotEmpty()) {
+            node.tags.forEach { (key, value) ->
+                val tagView = TextView(this).apply {
+                    text = getString(R.string.attribute_row, key, value)
+                    textSize = 14f
+                    setTextColor(android.graphics.Color.parseColor("#CBD5E1"))
+                    setPadding(0, 4, 0, 4)
+                }
+                tagContainer.addView(tagView)
+            }
+        } else {
+            view.findViewById<TextView>(R.id.tvAllTags)?.visibility = View.GONE
+        }
+
+        btnVerifyImagery.setOnClickListener {
+            val uri = Uri.parse("google.streetview:cbll=${node.lat},${node.lon}")
+            val intent = Intent(Intent.ACTION_VIEW, uri)
+            intent.setPackage("com.google.android.apps.maps")
+            if (intent.resolveActivity(packageManager) != null) {
+                startActivity(intent)
+            } else {
+                val browserUri = Uri.parse("https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${node.lat},${node.lon}")
+                startActivity(Intent(Intent.ACTION_VIEW, browserUri))
+            }
+        }
+        bottomSheetDialog.setContentView(view)
     }
 
     /**
@@ -1131,15 +1174,17 @@ class MapsActivity : AppCompatActivity() {
         val walesLabel = getString(R.string.legend_wales)
         val niLabel = getString(R.string.legend_ni)
         val essexLabel = getString(R.string.legend_essex)
+        val trafficVisionLabel = getString(R.string.legend_trafficvision)
         val webcamLabel = getString(R.string.legend_webcam)
-        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $londonLabel   $dot $highwayLabel   $dot $walesLabel   $dot $niLabel   $dot $essexLabel   $dot $webcamLabel")
+        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $londonLabel   $dot $highwayLabel   $dot $walesLabel   $dot $niLabel   $dot $essexLabel   $dot $trafficVisionLabel   $dot $webcamLabel")
         val councilDot = legend.indexOf(dot, 1)
         val londonDot = legend.indexOf(dot, councilDot + 1)
         val highwayDot = legend.indexOf(dot, londonDot + 1)
         val walesDot = legend.indexOf(dot, highwayDot + 1)
         val niDot = legend.indexOf(dot, walesDot + 1)
         val essexDot = legend.indexOf(dot, niDot + 1)
-        val webcamDot = legend.indexOf(dot, essexDot + 1)
+        val trafficVisionDot = legend.indexOf(dot, essexDot + 1)
+        val webcamDot = legend.indexOf(dot, trafficVisionDot + 1)
         legend.setSpan(ForegroundColorSpan(MARKER_COLOR), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(
             ForegroundColorSpan(COUNCIL_COLOR),
@@ -1162,6 +1207,7 @@ class MapsActivity : AppCompatActivity() {
         legend.setSpan(ForegroundColorSpan(WALES_COLOR), walesDot, walesDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(ForegroundColorSpan(NI_COLOR), niDot, niDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(ForegroundColorSpan(ESSEX_COLOR), essexDot, essexDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        legend.setSpan(ForegroundColorSpan(TRAFFICVISION_COLOR), trafficVisionDot, trafficVisionDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(ForegroundColorSpan(WEBCAM_COLOR), webcamDot, webcamDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legendView.text = legend
     }
@@ -1193,6 +1239,7 @@ class MapsActivity : AppCompatActivity() {
         const val SOURCE_TRAFFIC_WALES = "Traffic Wales"
         const val SOURCE_TRAFFICWATCH_NI = "TrafficWatchNI"
         const val SOURCE_ESSEX_HIGHWAYS = "Essex Highways"
+        const val SOURCE_TRAFFICVISION = "TrafficVision"
         const val DEFAULT_CAMERA_TITLE = "CCTV Camera"
         const val UNKNOWN_OPERATOR = "Unknown Operator"
         const val UNKNOWN_TYPE = "Unknown Type"
@@ -1217,6 +1264,7 @@ class MapsActivity : AppCompatActivity() {
         val WALES_COLOR: Int = "#00897B".toColorInt()
         val NI_COLOR: Int = "#388E3C".toColorInt()
         val ESSEX_COLOR: Int = "#C2185B".toColorInt()
+        val TRAFFICVISION_COLOR: Int = "#F9A825".toColorInt()
         val WEBCAM_COLOR: Int = "#00BCD4".toColorInt()
     }
 }

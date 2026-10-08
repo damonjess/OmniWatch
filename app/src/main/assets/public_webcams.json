@@ -3,7 +3,7 @@
     "id": "public-webcam-eernewoude-princenhof",
     "latitude": 53.132235,
     "longitude": 5.940653,
-    "name": "Eernewoude webcam — Hotel Princenhof",
+    "name": "Eernewoude webcam \u2014 Hotel Princenhof",
     "operator": "Public Webcam",
     "streamUrl": "https://5b8d2cbe62ad6.streamlock.net/live/eernewoude.stream/playlist.m3u8",
     "streamType": "HLS",
@@ -21,7 +21,7 @@
   },
   {
     "id": "public-webcam-lyme-regis-seafront",
-    "latitude": 50.7260,
+    "latitude": 50.726,
     "longitude": -2.9348,
     "name": "Lyme Regis seafront and Cobb Harbour",
     "operator": "Visit Dorset",
@@ -31,8 +31,8 @@
   },
   {
     "id": "public-webcam-cmal-scotland-harbours",
-    "latitude": 56.4110,
-    "longitude": -5.4720,
+    "latitude": 56.411,
+    "longitude": -5.472,
     "name": "CMAL Scottish harbour webcams",
     "operator": "Caledonian Maritime Assets",
     "streamUrl": "https://player.twitch.tv/?channel=cmaloban&parent=www.cmassets.co.uk&autoplay=true",
@@ -42,7 +42,7 @@
   {
     "id": "public-webcam-blackpool-central-pier",
     "latitude": 53.8118,
-    "longitude": -3.0550,
+    "longitude": -3.055,
     "name": "Blackpool Promenade and Central Pier",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/blackpool/blackpool.html",
@@ -81,7 +81,7 @@
   },
   {
     "id": "public-webcam-deal-beach-kent",
-    "latitude": 51.2230,
+    "latitude": 51.223,
     "longitude": 1.3985,
     "name": "Deal Beach and Pier",
     "operator": "SkylineWebcams",
@@ -92,7 +92,7 @@
   {
     "id": "public-webcam-barmouth-harbour",
     "latitude": 52.7215,
-    "longitude": -4.0560,
+    "longitude": -4.056,
     "name": "Barmouth Harbour and Bridge",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/barmouth-harbour.html",
@@ -102,7 +102,7 @@
   {
     "id": "public-webcam-bala-lake",
     "latitude": 52.9078,
-    "longitude": -3.5970,
+    "longitude": -3.597,
     "name": "Bala Lake and Sailing Club",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/bala.html",
@@ -112,7 +112,7 @@
   {
     "id": "public-webcam-porlock-weir",
     "latitude": 51.2165,
-    "longitude": -3.5960,
+    "longitude": -3.596,
     "name": "Porlock Weir",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/porlock-weir/porlock-weir.html",
@@ -122,7 +122,7 @@
   {
     "id": "public-webcam-hereford-high-town",
     "latitude": 52.0565,
-    "longitude": -2.7160,
+    "longitude": -2.716,
     "name": "Hereford High Town",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/hereford/hereford-high-town.html",
@@ -138,5 +138,85 @@
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/cardiff/cardiff.html",
     "streamType": "SKYLINE",
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/cardiff/cardiff.html"
+  },
+  {
+    "id": "public-webcam-st-ives-porthmeor-beach",
+    "latitude": 50.2141,
+    "longitude": -5.4808,
+    "name": "St Ives Porthmeor Beach",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/st-ives/porthmeor-beach.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/st-ives/porthmeor-beach.html"
+  },
+  {
+    "id": "public-webcam-newport-pembrokeshire",
+    "latitude": 52.016,
+    "longitude": -4.83,
+    "name": "Newport Pembrokeshire",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/newport/newport.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/newport/newport.html"
+  },
+  {
+    "id": "public-webcam-barmouth-bay-llanaber",
+    "latitude": 52.756,
+    "longitude": -4.084,
+    "name": "Barmouth Bay, Llanaber",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/llanaber-barmouth-bay.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/llanaber-barmouth-bay.html"
+  },
+  {
+    "id": "public-webcam-barmouth-beach",
+    "latitude": 52.7215,
+    "longitude": -4.056,
+    "name": "Barmouth Beach",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/barmouth.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/barmouth.html"
+  },
+  {
+    "id": "public-webcam-hawes-yorkshire-dales",
+    "latitude": 54.306,
+    "longitude": -2.199,
+    "name": "Hawes, Yorkshire Dales",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/hawes/hawes.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/hawes/hawes.html"
+  },
+  {
+    "id": "public-webcam-river-wye-hereford",
+    "latitude": 52.052,
+    "longitude": -2.714,
+    "name": "River Wye, Hereford",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/hereford/river-wye-hereford.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/hereford/river-wye-hereford.html"
+  },
+  {
+    "id": "public-webcam-sutton-coldfield",
+    "latitude": 52.57,
+    "longitude": -1.82,
+    "name": "Sutton Coldfield, Powell's Pool",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/birmingham/sutton-coldfield.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/birmingham/sutton-coldfield.html"
+  },
+  {
+    "id": "public-webcam-bala-gwynedd",
+    "latitude": 52.9078,
+    "longitude": -3.597,
+    "name": "Bala, Gwynedd",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/bala-gwynedd.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/bala-gwynedd.html"
   }
 ]
