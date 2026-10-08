@@ -83,3 +83,19 @@ The endpoint returned HTTP 200 with `image/jpeg` during verification.
 - Every video camera also carries a snapshot, so a stream that has gone offline (several ozolio relays now answer 404) falls back to the still image with `Live video unavailable — showing the latest image instead` rather than a dead player.
 - TrafficVision markers were changed from gold to lime (`#AEEA00`) so they are no longer mistaken for the orange OpenStreetMap markers.
 - Tests: `CameraStreamsTest` covers the classifier, `TrafficVisionDataLoaderTest` asserts the bundled catalogue keeps its video and YouTube fields, and `CameraEntityTest` checks a hybrid camera maps to a playable HLS node. `./gradlew testDebugUnitTest assembleDebug` passes (51 unit tests).
+
+### Viewport render fix
+
+- The visible-area box was clamped to 0.6° and that **clamped** box was then used to query the local camera table, so at a wide zoom only a central slice of the map ever drew: most of the 5,717 TrafficVision cameras could never appear, and neither could any other source outside the slice.
+- The clamp now applies only to the Overpass request, which is the call that has to stay small because it hits a shared public API. The local table is queried with the true viewport, so every camera in view is drawn.
+- Measured on device with a temporary wide starting zoom: 10,640 cameras rendered in one viewport with no ANR. The starting zoom is back at its real value of 12.0.
+
+### ISS live tracking overlay
+
+- Added a live International Space Station layer: a magenta marker (`#E040FB`) that follows the station on the map, an `ISS` button in the map header that centres on it, a legend entry, and a tracker sheet with NASA's live high-definition view plus live telemetry (`OVER` / `LAT` / `LNG` / `ALT` / `VEL` / `VIS`). This mirrors the ISS view on TrafficVision.Live.
+- Position comes from the public wheretheiss.at feed (`GET /v1/satellites/25544`), polled every 5 seconds while the screen is visible and stopped in `onPause`. TrafficVision's own ISS catalogue record carries a **frozen** position (44.8228, -28.2395), so it cannot place the marker: the coordinates have to be re-read while the app is open.
+- The country under the station comes from `GET /v1/coordinates/{lat},{lon}`, resolved to a readable name with the platform's locale data (`PE` -> `Peru`). That second request only runs while the sheet is open, at most once a minute, and its 404 over open ocean is treated as "no country" rather than a failure.
+- The video is NASA's own live stream (`awQzjn72bI0`, the "Live High-Definition Views from the International Space Station" feed named in the ISS entry) played through the existing embedded-player sheet, so the ISS reuses the app's WebView path. The standard-resolution feed `M3HKLzjvKPc` is recorded in the code as the alternate.
+- The ISS embed needs the **ordinary** webcam Referer. An earlier version gave it `https://www.youtube.com/` on the reasoning that a YouTube stream should carry YouTube's referer; that was wrong, and the player rendered YouTube error `152-4`, which YouTube's own reports describe as being caused by a missing or invalid Referer. A YouTube host cannot be the embedder of its own embed, so the special case was removed and the ISS now uses the same `https://www.cmassets.co.uk/` referer as every other embedded page.
+- The station is deliberately **not** a row in the camera table: it moves, and a moving row would fight the viewport queries. It lives in its own overlay that viewport refreshes never clear.
+- `IssTelemetry` formats every value (pure, unit tested, pinned to `Locale.US` so grouped thousands and the decimal point do not change with the device locale). `./gradlew testDebugUnitTest assembleDebug` passes (57 unit tests).

@@ -25,6 +25,17 @@
     <string name="legend_essex">Essex Highways</string>
     <string name="legend_trafficvision">TrafficVision UK/Ireland</string>
     <string name="legend_webcam">Public Webcams</string>
+    <string name="legend_iss">ISS</string>
+    <string name="iss_button">ISS</string>
+    <string name="iss_title">ISS - LIVE HD VIEWS FROM SPACE</string>
+    <string name="iss_unavailable">ISS position unavailable - check your connection.</string>
+    <string name="iss_value_pending">—</string>
+    <string name="iss_row_over">OVER</string>
+    <string name="iss_row_lat">LAT</string>
+    <string name="iss_row_lng">LNG</string>
+    <string name="iss_row_alt">ALT</string>
+    <string name="iss_row_vel">VEL</string>
+    <string name="iss_row_vis">VIS</string>
     <string name="public_webcams">Public Webcams</string>
     <string name="search_webcams_hint">Search webcams, towns, or operators</string>
     <string name="webcam_directory_subtitle">Select a webcam to play its live feed and centre the map.</string>

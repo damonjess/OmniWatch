@@ -30,6 +30,168 @@
         android:layout_marginTop="12dp"
         android:background="#111111" />
 
+    <!-- Live telemetry for the ISS tracker sheet. Stays gone for every other entry: a camera
+         page has no position, altitude or velocity to report. -->
+    <LinearLayout
+        android:id="@+id/issTelemetry"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="3dp">
+
+            <TextView
+                android:layout_width="58dp"
+                android:layout_height="wrap_content"
+                android:text="@string/iss_row_over"
+                android:textColor="#94A3B8"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvIssOver"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="monospace"
+                android:text="@string/iss_value_pending"
+                android:textColor="#F8FAFC"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="3dp">
+
+            <TextView
+                android:layout_width="58dp"
+                android:layout_height="wrap_content"
+                android:text="@string/iss_row_lat"
+                android:textColor="#94A3B8"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvIssLat"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="monospace"
+                android:text="@string/iss_value_pending"
+                android:textColor="#F8FAFC"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="3dp">
+
+            <TextView
+                android:layout_width="58dp"
+                android:layout_height="wrap_content"
+                android:text="@string/iss_row_lng"
+                android:textColor="#94A3B8"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvIssLng"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="monospace"
+                android:text="@string/iss_value_pending"
+                android:textColor="#F8FAFC"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="3dp">
+
+            <TextView
+                android:layout_width="58dp"
+                android:layout_height="wrap_content"
+                android:text="@string/iss_row_alt"
+                android:textColor="#94A3B8"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvIssAlt"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="monospace"
+                android:text="@string/iss_value_pending"
+                android:textColor="#F8FAFC"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="3dp">
+
+            <TextView
+                android:layout_width="58dp"
+                android:layout_height="wrap_content"
+                android:text="@string/iss_row_vel"
+                android:textColor="#94A3B8"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvIssVel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="monospace"
+                android:text="@string/iss_value_pending"
+                android:textColor="#F8FAFC"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="3dp">
+
+            <TextView
+                android:layout_width="58dp"
+                android:layout_height="wrap_content"
+                android:text="@string/iss_row_vis"
+                android:textColor="#94A3B8"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvIssVis"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="monospace"
+                android:text="@string/iss_value_pending"
+                android:textColor="#F8FAFC"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
     <TextView
         android:id="@+id/tvExternalWebcamStatus"
         android:layout_width="match_parent"

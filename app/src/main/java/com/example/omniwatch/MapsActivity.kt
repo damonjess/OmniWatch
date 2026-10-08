@@ -54,6 +54,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.onTimeout
@@ -95,6 +96,7 @@ class MapsActivity : AppCompatActivity() {
     private lateinit var essexOverlay: FolderOverlay
     private lateinit var trafficVisionOverlay: FolderOverlay
     private lateinit var webcamOverlay: FolderOverlay
+    private lateinit var issOverlay: FolderOverlay
     private lateinit var cameraCountView: TextView
     private lateinit var legendView: TextView
     private lateinit var database: AppDatabase
@@ -104,6 +106,23 @@ class MapsActivity : AppCompatActivity() {
     private var webcamLoaded = false
     private var trafficVisionLoaded = false
     private var activeWebcamPlayer: ExoPlayer? = null
+
+    /** The station's last known position, the marker that follows it, and the job that polls it. */
+    private var issPosition: IssPosition? = null
+    private var issMarker: Marker? = null
+    private var issTrackingJob: Job? = null
+
+    /** Country under the station, shown in the tracker sheet's "OVER" row. */
+    private var issRegion: String? = null
+
+    /** Non-null only while the tracker sheet is open, so its telemetry is updated on screen. */
+    private var issSheet: IssSheetViews? = null
+    private var issDialog: BottomSheetDialog? = null
+
+    /** When "OVER" was last refreshed; a country changes slowly and needs no polling. */
+    private var lastIssRegionAt = 0L
+
+    private val issApi: IssApi by lazy { buildIssApi() }
 
     private var fetchJob: Job? = null
     private var lastFetchedBbox: ViewportBounds? = null
@@ -183,6 +202,7 @@ class MapsActivity : AppCompatActivity() {
         essexOverlay = FolderOverlay()
         trafficVisionOverlay = FolderOverlay()
         webcamOverlay = FolderOverlay()
+        issOverlay = FolderOverlay()
         mapView.overlays.add(fovOverlay)
         mapView.overlays.add(osmOverlay)
         mapView.overlays.add(councilOverlay)
@@ -193,6 +213,7 @@ class MapsActivity : AppCompatActivity() {
         mapView.overlays.add(essexOverlay)
         mapView.overlays.add(trafficVisionOverlay)
         mapView.overlays.add(webcamOverlay)
+        mapView.overlays.add(issOverlay)
 
         // Panning or zooming re-queries only the area that came into view. The delay folds a
         // continuous drag into one request instead of one request per frame.
@@ -213,6 +234,9 @@ class MapsActivity : AppCompatActivity() {
             publicWebcamsLauncher.launch(Intent(this, PublicWebcamsActivity::class.java))
         }
 
+        val btnIss = findViewById<MaterialButton>(R.id.btnIss)
+        btnIss?.setOnClickListener { centreOnIssAndOpenSheet() }
+
         // The bounding box is only meaningful once the view has been laid out.
         mapView.post { refreshViewport(force = true) }
 
@@ -223,6 +247,7 @@ class MapsActivity : AppCompatActivity() {
         super.onResume()
         if (::mapView.isInitialized) mapView.onResume()
         if (::locationOverlay.isInitialized) locationOverlay.enableMyLocation()
+        if (::issOverlay.isInitialized) startIssTracking()
     }
 
     private fun fetchLiveTrafficCameras() {
@@ -353,6 +378,7 @@ class MapsActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
+        stopIssTracking()
         if (::locationOverlay.isInitialized) locationOverlay.disableMyLocation()
         if (::mapView.isInitialized) mapView.onPause()
         super.onPause()
@@ -361,6 +387,7 @@ class MapsActivity : AppCompatActivity() {
     override fun onDestroy() {
         refreshHandler.removeCallbacksAndMessages(null)
         fetchJob?.cancel()
+        issTrackingJob?.cancel()
         activeWebcamPlayer?.release()
         activeWebcamPlayer = null
         super.onDestroy()
@@ -845,7 +872,16 @@ class MapsActivity : AppCompatActivity() {
     private fun shouldEmbedPlayer(node: CctvNode): Boolean =
         node.isWebcam || node.imageUrl.isNullOrBlank() || !node.tags["youtubeVideoId"].isNullOrBlank()
 
-    private fun showExternalWebcamSheet(bottomSheetDialog: BottomSheetDialog, node: CctvNode) {
+    /**
+     * Shows an operator's embedded player page. Returns the inflated view so callers that add their
+     * own content (the ISS tracker sheet) can reach it, and runs [onDismiss] once the WebView has
+     * been torn down.
+     */
+    private fun showExternalWebcamSheet(
+        bottomSheetDialog: BottomSheetDialog,
+        node: CctvNode,
+        onDismiss: (() -> Unit)? = null,
+    ): View {
         val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_webcam_external, null)
         val tvStatus = view.findViewById<TextView>(R.id.tvExternalWebcamStatus)
         val sourceLabel = if (node.source.isNotBlank()) node.source.uppercase() else "LIVE WEBCAM"
@@ -967,10 +1003,13 @@ class MapsActivity : AppCompatActivity() {
 
         val pageUrl = WebcamPages.embeddableUrl(node.streamUrl ?: node.websiteUrl)
         if (pageUrl != null) {
-            val referer = if (pageUrl.contains("trafficvision", ignoreCase = true) || node.source == SOURCE_TRAFFICVISION) {
-                "https://trafficvision.live/"
-            } else {
-                "https://www.cmassets.co.uk/"
+            // Every embedded page needs a Referer, and it must identify a real embedding origin.
+            // The ISS stream is a YouTube live stream, and YouTube rejects an embed whose Referer
+            // is a YouTube host with player error 152-4, so it keeps the ordinary webcam referer.
+            val referer = when {
+                pageUrl.contains("trafficvision", ignoreCase = true) ||
+                    node.source == SOURCE_TRAFFICVISION -> TRAFFICVISION_REFERER
+                else -> DEFAULT_WEBCAM_REFERER
             }
             val extraHeaders = mutableMapOf("Referer" to referer)
             webcamView.loadUrl(toEmbeddedWebcamUrl(pageUrl), extraHeaders)
@@ -978,8 +1017,10 @@ class MapsActivity : AppCompatActivity() {
         bottomSheetDialog.setOnDismissListener {
             webcamView.stopLoading()
             webcamView.destroy()
+            onDismiss?.invoke()
         }
         bottomSheetDialog.setContentView(view)
+        return view
     }
 
     private fun showTrafficCameraSheet(bottomSheetDialog: BottomSheetDialog, node: CctvNode) {
@@ -1213,6 +1254,182 @@ class MapsActivity : AppCompatActivity() {
     }
 
     /**
+     * Follows the station while the screen is visible. The feed is polled rather than interpolated:
+     * it is a free public API, one request every few seconds keeps the marker on the current orbit,
+     * and tracking stops completely in onPause.
+     */
+    private fun startIssTracking() {
+        if (issTrackingJob?.isActive == true) return
+        issTrackingJob = lifecycleScope.launch {
+            while (isActive) {
+                val position = fetchIssPosition()
+                if (position != null) {
+                    issPosition = position
+                    updateIssMarker(position)
+                    issSheet?.let { updateIssTelemetry(it, position) }
+                    refreshIssRegionIfNeeded(position)
+                }
+                delay(ISS_REFRESH_MS)
+            }
+        }
+    }
+
+    private fun stopIssTracking() {
+        issTrackingJob?.cancel()
+        issTrackingJob = null
+    }
+
+    private suspend fun fetchIssPosition(): IssPosition? = withContext(Dispatchers.IO) {
+        try {
+            issApi.getPosition()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "ISS position lookup failed", e)
+            null
+        }
+    }
+
+    /**
+     * Refreshes the country under the station for the "OVER" row. Only runs while the sheet is
+     * open, and at most every [ISS_REGION_REFRESH_MS], because this is a second request against the
+     * same public API and the answer changes slowly.
+     */
+    private suspend fun refreshIssRegionIfNeeded(position: IssPosition) {
+        if (issSheet == null) return
+        val elapsed = SystemClock.elapsedRealtime() - lastIssRegionAt
+        if (lastIssRegionAt != 0L && elapsed < ISS_REGION_REFRESH_MS) return
+        lastIssRegionAt = SystemClock.elapsedRealtime()
+
+        val region = withContext(Dispatchers.IO) {
+            try {
+                IssTelemetry.formatRegion(
+                    issApi.getRegion(position.latitude, position.longitude).countryCode
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Also the ordinary answer over open ocean, where there is no country to report.
+                null
+            }
+        }
+
+        issRegion = region
+        issSheet?.let { updateIssTelemetry(it, position) }
+    }
+
+    /** Creates the station marker on first fix, then moves it on every later poll. */
+    private fun updateIssMarker(position: IssPosition) {
+        val marker = issMarker ?: Marker(mapView).apply {
+            title = getString(R.string.iss_title)
+            icon = markerIcon(ISS_COLOR, ISS_MARKER_SIZE_DP)
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+            setOnMarkerClickListener { _, _ ->
+                showIssSheet()
+                true
+            }
+            issOverlay.add(this)
+        }
+        marker.position = GeoPoint(position.latitude, position.longitude)
+        issMarker = marker
+        mapView.invalidate()
+    }
+
+    /** Centres the map on the station and opens its tracker sheet. */
+    private fun centreOnIssAndOpenSheet() {
+        val position = issPosition
+        if (position == null) {
+            android.widget.Toast.makeText(
+                this,
+                getString(R.string.iss_unavailable),
+                android.widget.Toast.LENGTH_SHORT,
+            ).show()
+            return
+        }
+        mapView.controller.animateTo(
+            GeoPoint(position.latitude, position.longitude),
+            ISS_ZOOM_LEVEL,
+            ISS_CENTRE_ANIMATION_MS,
+        )
+        showIssSheet()
+    }
+
+    /**
+     * Opens the ISS tracker sheet: NASA's live high-definition view of the station plus its live
+     * telemetry, reusing the embedded-player sheet so the live stream behaves like any other feed.
+     */
+    private fun showIssSheet() {
+        if (issDialog?.isShowing == true) return
+        val position = issPosition ?: return
+
+        val dialog = BottomSheetDialog(this)
+        issDialog = dialog
+        val view = showExternalWebcamSheet(dialog, issNode(position)) {
+            if (issDialog === dialog) issDialog = null
+            issSheet = null
+        }
+
+        val telemetry = IssSheetViews(
+            over = view.findViewById(R.id.tvIssOver),
+            lat = view.findViewById(R.id.tvIssLat),
+            lng = view.findViewById(R.id.tvIssLng),
+            alt = view.findViewById(R.id.tvIssAlt),
+            vel = view.findViewById(R.id.tvIssVel),
+            visibility = view.findViewById(R.id.tvIssVis),
+        )
+        view.findViewById<LinearLayout>(R.id.issTelemetry).visibility = View.VISIBLE
+        issSheet = telemetry
+        updateIssTelemetry(telemetry, position)
+        dialog.show()
+    }
+
+    /**
+     * The station as a map entry. It is deliberately not a row in the camera table: TrafficVision's
+     * ISS record carries a frozen position, and a moving row would fight the viewport queries.
+     */
+    private fun issNode(position: IssPosition): CctvNode = CctvNode(
+        lat = position.latitude,
+        lon = position.longitude,
+        titleStr = getString(R.string.iss_title),
+        source = SOURCE_ISS,
+        operator = "NASA",
+        type = "Space station",
+        // A YouTube live stream, which the embedded-player sheet already knows how to load.
+        streamUrl = ISS_WATCH_URL,
+        streamType = "LIVE YOUTUBE",
+    )
+
+    private fun updateIssTelemetry(views: IssSheetViews, position: IssPosition) {
+        views.over.text = issRegion ?: getString(R.string.iss_value_pending)
+        views.lat.text = IssTelemetry.formatCoordinate(position.latitude)
+        views.lng.text = IssTelemetry.formatCoordinate(position.longitude)
+        views.alt.text = IssTelemetry.formatAltitudeKm(position.altitude)
+        views.vel.text = IssTelemetry.formatVelocityKmh(position.velocity)
+        views.visibility.text = IssTelemetry.formatVisibility(position.visibility)
+    }
+
+    private fun buildIssApi(): IssApi {
+        val client = OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(20, TimeUnit.SECONDS)
+            .addInterceptor { chain ->
+                chain.proceed(
+                    chain.request().newBuilder()
+                        .header("User-Agent", AppUserAgent.value)
+                        .build()
+                )
+            }
+            .build()
+
+        return Retrofit.Builder()
+            .baseUrl(ISS_BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(IssApi::class.java)
+    }
+
+    /**
      * Builds the media source for a player sheet. TrafficVision's own HLS proxy rejects requests
      * that do not carry the site Referer (HTTP 403), so those headers are attached for its cameras
      * only; public webcams keep the player's default request headers.
@@ -1265,7 +1482,8 @@ class MapsActivity : AppCompatActivity() {
         val essexLabel = getString(R.string.legend_essex)
         val trafficVisionLabel = getString(R.string.legend_trafficvision)
         val webcamLabel = getString(R.string.legend_webcam)
-        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $londonLabel   $dot $highwayLabel   $dot $walesLabel   $dot $niLabel   $dot $essexLabel   $dot $trafficVisionLabel   $dot $webcamLabel")
+        val issLabel = getString(R.string.legend_iss)
+        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $londonLabel   $dot $highwayLabel   $dot $walesLabel   $dot $niLabel   $dot $essexLabel   $dot $trafficVisionLabel   $dot $webcamLabel   $dot $issLabel")
         val councilDot = legend.indexOf(dot, 1)
         val londonDot = legend.indexOf(dot, councilDot + 1)
         val highwayDot = legend.indexOf(dot, londonDot + 1)
@@ -1274,6 +1492,7 @@ class MapsActivity : AppCompatActivity() {
         val essexDot = legend.indexOf(dot, niDot + 1)
         val trafficVisionDot = legend.indexOf(dot, essexDot + 1)
         val webcamDot = legend.indexOf(dot, trafficVisionDot + 1)
+        val issDot = legend.indexOf(dot, webcamDot + 1)
         legend.setSpan(ForegroundColorSpan(MARKER_COLOR), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(
             ForegroundColorSpan(COUNCIL_COLOR),
@@ -1298,12 +1517,13 @@ class MapsActivity : AppCompatActivity() {
         legend.setSpan(ForegroundColorSpan(ESSEX_COLOR), essexDot, essexDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(ForegroundColorSpan(TRAFFICVISION_COLOR), trafficVisionDot, trafficVisionDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(ForegroundColorSpan(WEBCAM_COLOR), webcamDot, webcamDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        legend.setSpan(ForegroundColorSpan(ISS_COLOR), issDot, issDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legendView.text = legend
     }
 
-    private fun markerIcon(color: Int): Drawable {
+    private fun markerIcon(color: Int, sizeDp: Int = MARKER_SIZE_DP): Drawable {
         val density = resources.displayMetrics.density
-        val size = (MARKER_SIZE_DP * density).toInt()
+        val size = (sizeDp * density).toInt()
         return GradientDrawable().apply {
             shape = GradientDrawable.OVAL
             setColor(color)
@@ -1319,10 +1539,21 @@ class MapsActivity : AppCompatActivity() {
         west = minOf(lonEast, lonWest),
     )
 
+    /** The tracker sheet's value views, held so each poll updates them in place. */
+    private class IssSheetViews(
+        val over: TextView,
+        val lat: TextView,
+        val lng: TextView,
+        val alt: TextView,
+        val vel: TextView,
+        val visibility: TextView,
+    )
+
     private companion object {
         const val TAG = "MapsActivity"
         const val SNAPSHOT_REFRESH_MS = 7_000L
         const val TRAFFICVISION_REFERER = "https://trafficvision.live/"
+        const val DEFAULT_WEBCAM_REFERER = "https://www.cmassets.co.uk/"
         const val BROWSER_USER_AGENT =
             "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
         const val SOURCE_OVERPASS = "OVERPASS"
@@ -1332,14 +1563,31 @@ class MapsActivity : AppCompatActivity() {
         const val SOURCE_TRAFFICWATCH_NI = "TrafficWatchNI"
         const val SOURCE_ESSEX_HIGHWAYS = "Essex Highways"
         const val SOURCE_TRAFFICVISION = "TrafficVision"
+        const val SOURCE_ISS = "ISS"
         const val DEFAULT_CAMERA_TITLE = "CCTV Camera"
         const val UNKNOWN_OPERATOR = "Unknown Operator"
         const val UNKNOWN_TYPE = "Unknown Type"
         const val OVERPASS_BASE_URL = "https://overpass-api.de/"
 
+        /** Live ISS tracking, the same open feed TrafficVision.Live's ISS view is built on. */
+        const val ISS_BASE_URL = "https://api.wheretheiss.at/"
+
+        /**
+         * NASA's own live stream of the station, the feed the TrafficVision ISS entry embeds. The
+         * standard-resolution stream is `M3HKLzjvKPc` should this one ever be taken down.
+         */
+        const val ISS_VIDEO_ID = "awQzjn72bI0"
+        const val ISS_WATCH_URL = "https://www.youtube.com/watch?v=$ISS_VIDEO_ID"
+
         const val MARKER_SIZE_DP = 16
         const val MARKER_STROKE_DP = 2
         const val VIEWPORT_DEBOUNCE_MS = 1500L
+
+        const val ISS_REFRESH_MS = 5_000L
+        const val ISS_REGION_REFRESH_MS = 60_000L
+        const val ISS_CENTRE_ANIMATION_MS = 1_000L
+        const val ISS_ZOOM_LEVEL = 4.0
+        const val ISS_MARKER_SIZE_DP = 22
 
         const val HEDGE_DELAY_MS = 5_000L
         const val MIN_FETCH_INTERVAL_MS = 3_000L
@@ -1358,5 +1606,6 @@ class MapsActivity : AppCompatActivity() {
         val ESSEX_COLOR: Int = "#C2185B".toColorInt()
         val TRAFFICVISION_COLOR: Int = "#AEEA00".toColorInt()
         val WEBCAM_COLOR: Int = "#00BCD4".toColorInt()
+        val ISS_COLOR: Int = "#E040FB".toColorInt()
     }
 }
