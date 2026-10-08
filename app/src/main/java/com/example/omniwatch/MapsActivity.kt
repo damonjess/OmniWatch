@@ -1,6 +1,7 @@
 package com.example.omniwatch
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -17,17 +18,22 @@ import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.View
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import coil.imageLoader
-import coil.load
-import coil.request.ImageRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
+import coil.imageLoader
+import coil.request.ImageRequest
 import com.example.omniwatch.data.db.AppDatabase
 import com.example.omniwatch.data.db.CameraEntity
 import com.example.omniwatch.data.db.CameraTags
@@ -37,10 +43,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.onTimeout
@@ -80,12 +84,15 @@ class MapsActivity : AppCompatActivity() {
     private lateinit var walesOverlay: FolderOverlay
     private lateinit var niOverlay: FolderOverlay
     private lateinit var essexOverlay: FolderOverlay
+    private lateinit var webcamOverlay: FolderOverlay
     private lateinit var cameraCountView: TextView
     private lateinit var legendView: TextView
     private lateinit var database: AppDatabase
 
     /** The bundled council dataset is read from assets once per process. */
     private var councilLoaded = false
+    private var webcamLoaded = false
+    private var activeWebcamPlayer: ExoPlayer? = null
 
     private var fetchJob: Job? = null
     private var lastFetchedBbox: ViewportBounds? = null
@@ -104,6 +111,19 @@ class MapsActivity : AppCompatActivity() {
     /** Why the last fetch failed, shown next to the count so a stall is never a dead end. */
     private var lastFailure: String? = null
 
+    private val publicWebcamsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data ?: return@registerForActivityResult
+            val lat = data.getDoubleExtra(PublicWebcamsActivity.EXTRA_LAT, 0.0)
+            val lon = data.getDoubleExtra(PublicWebcamsActivity.EXTRA_LON, 0.0)
+            if (lat != 0.0 || lon != 0.0) {
+                mapView.controller.animateTo(GeoPoint(lat, lon), 15.0, 1000L)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -117,7 +137,7 @@ class MapsActivity : AppCompatActivity() {
         mapView = findViewById(R.id.map)
         mapView.setTileSource(OpenStreetMapTileSource)
         mapView.setMultiTouchControls(true)
-        
+
         // Move camera to Scunthorpe / M180 junction area
         mapView.controller.setZoom(12.0)
         mapView.controller.setCenter(GeoPoint(53.58, -0.65))
@@ -142,6 +162,7 @@ class MapsActivity : AppCompatActivity() {
         walesOverlay = FolderOverlay()
         niOverlay = FolderOverlay()
         essexOverlay = FolderOverlay()
+        webcamOverlay = FolderOverlay()
         mapView.overlays.add(fovOverlay)
         mapView.overlays.add(osmOverlay)
         mapView.overlays.add(councilOverlay)
@@ -150,11 +171,12 @@ class MapsActivity : AppCompatActivity() {
         mapView.overlays.add(walesOverlay)
         mapView.overlays.add(niOverlay)
         mapView.overlays.add(essexOverlay)
+        mapView.overlays.add(webcamOverlay)
 
         // Panning or zooming re-queries only the area that came into view. The delay folds a
         // continuous drag into one request instead of one request per frame.
         mapView.addMapListener(DelayedMapListener(viewportListener, VIEWPORT_DEBOUNCE_MS))
-        
+
         val fabLocateMe = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabLocateMe)
         fabLocateMe.setOnClickListener {
             val myLocation = locationOverlay.myLocation
@@ -165,9 +187,14 @@ class MapsActivity : AppCompatActivity() {
             }
         }
 
+        val btnPublicWebcams = findViewById<MaterialButton>(R.id.btnPublicWebcams)
+        btnPublicWebcams?.setOnClickListener {
+            publicWebcamsLauncher.launch(Intent(this, PublicWebcamsActivity::class.java))
+        }
+
         // The bounding box is only meaningful once the view has been laid out.
         mapView.post { refreshViewport(force = true) }
-        
+
         fetchLiveTrafficCameras()
     }
 
@@ -252,8 +279,7 @@ class MapsActivity : AppCompatActivity() {
                 Log.w(TAG, "Failed to fetch live traffic cameras", e)
             }
 
-            // Load public National Highways and regional cameras from the catalogue. WebTRIS
-            // sites are traffic sensors, not CCTV cameras, so they are deliberately excluded.
+            // Load public National Highways and regional cameras from the catalogue.
             try {
                 val nhEntities = nhApi.getCameras().mapNotNull { camera ->
                     if (!camera.active || camera.latitude == 0.0 && camera.longitude == 0.0) return@mapNotNull null
@@ -294,8 +320,6 @@ class MapsActivity : AppCompatActivity() {
                     )
                 }
                 if (nhEntities.isNotEmpty()) {
-                    // Remove stale records from the previous catalogue sync before inserting the
-                    // current National Highways, Wales, NI, and Essex camera set.
                     database.cameraDao().clearNationalHighwaysCameras()
                     database.cameraDao().clearRegionalTrafficCameras()
                     database.cameraDao().insertCameras(nhEntities)
@@ -314,24 +338,19 @@ class MapsActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        refreshHandler.removeCallbacks(refreshRunnable)
+        refreshHandler.removeCallbacksAndMessages(null)
         fetchJob?.cancel()
+        activeWebcamPlayer?.release()
+        activeWebcamPlayer = null
         super.onDestroy()
     }
 
-    /**
-     * osmdroid renders OpenStreetMap tiles and needs no API key. The tile cache is pointed at
-     * internal storage so no storage permission is required, and a real User-Agent is supplied
-     * as required by the OSM tile usage policy.
-     */
     private fun configureOsmdroid() {
         val config = Configuration.getInstance()
         config.load(this, getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
         val basePath = File(filesDir, "osmdroid")
         config.osmdroidBasePath = basePath
         config.osmdroidTileCache = File(basePath, "tiles")
-        // OSM serves a blank placeholder tile to unidentified clients, so a real
-        // User-Agent is required for the map to render at all.
         config.userAgentValue = AppUserAgent.value
     }
 
@@ -347,10 +366,6 @@ class MapsActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Reloads cameras for the area currently on screen. Cached data is drawn first so panning
-     * feels instant, then the live Overpass result replaces it.
-     */
     private fun refreshViewport(force: Boolean = false) {
         if (!::mapView.isInitialized) return
         val bounds = mapView.boundingBox.toViewportBounds()?.clampedTo(MAX_QUERY_SPAN_DEGREES)
@@ -360,7 +375,6 @@ class MapsActivity : AppCompatActivity() {
 
         val elapsed = SystemClock.elapsedRealtime() - lastFetchAt
         if (!force && elapsed < MIN_FETCH_INTERVAL_MS) {
-            // Too soon after the previous request: come back when the interval has passed.
             refreshHandler.removeCallbacks(refreshRunnable)
             refreshHandler.postDelayed(refreshRunnable, MIN_FETCH_INTERVAL_MS - elapsed)
             return
@@ -370,9 +384,8 @@ class MapsActivity : AppCompatActivity() {
         fetchJob?.cancel()
         setFetching(true)
         fetchJob = lifecycleScope.launch {
-            // Council records ship with the app, so they are on the map before any network
-            // round trip finishes and stay there when Overpass is unreachable.
             ensureCouncilData()
+            ensurePublicWebcamData()
             renderViewport(bounds)
 
             val live = fetchOverpassCameras(bounds)
@@ -381,7 +394,6 @@ class MapsActivity : AppCompatActivity() {
                 if (live.isNotEmpty()) {
                     withContext(Dispatchers.IO) { database.cameraDao().insertCameras(live) }
                 }
-                // Remember the area so an unchanged viewport is not queried twice.
                 lastFetchedBbox = bounds
             }
 
@@ -394,11 +406,6 @@ class MapsActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Overpass is often busy or briefly unreachable, and without a retry a failed first fetch
-     * would leave the map showing nothing but the bundled council cameras until the user moved
-     * the map. Backs off so a struggling server is not hammered.
-     */
     private fun scheduleRetry() {
         if (failedAttempts >= MAX_RETRY_ATTEMPTS) return
         val delay = (RETRY_BASE_DELAY_MS shl failedAttempts).coerceAtMost(MAX_RETRY_DELAY_MS)
@@ -407,7 +414,6 @@ class MapsActivity : AppCompatActivity() {
         refreshHandler.postDelayed(refreshRunnable, delay)
     }
 
-    /** Loads the bundled council dataset into Room once so viewport queries include it. */
     private suspend fun ensureCouncilData() {
         if (councilLoaded) return
         val councilCameras = withContext(Dispatchers.IO) {
@@ -423,6 +429,20 @@ class MapsActivity : AppCompatActivity() {
         councilLoaded = true
     }
 
+    private suspend fun ensurePublicWebcamData() {
+        if (webcamLoaded) return
+        val webcams = withContext(Dispatchers.IO) {
+            PublicWebcamDataLoader.loadFromAssets(this@MapsActivity)
+        }
+        if (webcams.isNotEmpty()) {
+            withContext(Dispatchers.IO) {
+                database.cameraDao().clearPublicWebcams()
+                database.cameraDao().insertCameras(webcams)
+            }
+        }
+        webcamLoaded = true
+    }
+
     private suspend fun renderViewport(bounds: ViewportBounds) {
         val cameras = withContext(Dispatchers.IO) {
             database.cameraDao().getCamerasIn(bounds.south, bounds.north, bounds.west, bounds.east)
@@ -430,12 +450,6 @@ class MapsActivity : AppCompatActivity() {
         showMarkers(cameras)
     }
 
-    /**
-     * Starts the first endpoint immediately and launches mirrors as hedges if the active request
-     * takes longer than [HEDGE_DELAY_MS] or fails.
-     *
-     * Returns null when every endpoint failed, so callers can tell "no data" from "no answer".
-     */
     @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun fetchOverpassCameras(bounds: ViewportBounds): List<CameraEntity>? =
         coroutineScope {
@@ -484,7 +498,6 @@ class MapsActivity : AppCompatActivity() {
             found
         }
 
-    /** Returns null if this endpoint failed, and rethrows cancellation so hedging stays prompt. */
     private suspend fun requestCameras(endpoint: String, query: String): List<CameraEntity>? {
         return try {
             val response = withContext(Dispatchers.IO) {
@@ -492,7 +505,6 @@ class MapsActivity : AppCompatActivity() {
                     .getOrElse { overpassApi.getCctvCamerasGet(endpoint, query) }
             }
 
-            // A remark means the server rejected or could not finish the query.
             if (response.remark != null) {
                 lastFailure = response.remark
                 Log.w(TAG, "Overpass endpoint $endpoint returned: ${response.remark}")
@@ -509,7 +521,6 @@ class MapsActivity : AppCompatActivity() {
         }
     }
 
-    /** Short, human-readable reason for a failed Overpass call. */
     private fun describe(e: Exception): String = when (e) {
         is HttpException -> "HTTP ${e.code()}"
         is SocketTimeoutException -> "timeout"
@@ -524,14 +535,12 @@ class MapsActivity : AppCompatActivity() {
 
         val operatorStr = tags["operator"] ?: UNKNOWN_OPERATOR
         val typeStr = tags["surveillance:type"] ?: tags["camera:type"] ?: tags["highway"] ?: tags["man_made"] ?: UNKNOWN_TYPE
-        
-        // 1. Extract the National Highways Camera ID from the OSM tags
+
         val ref = tags["ref"] ?: tags["asset_ref"]
         var liveImgUrl: String? = null
-        
-        // 2. If it is a National Highways camera with a reference ID, generate the live hotlink
-        if ((operatorStr.contains("National Highways", ignoreCase = true) || 
-             operatorStr.contains("Highways England", ignoreCase = true)) && 
+
+        if ((operatorStr.contains("National Highways", ignoreCase = true) ||
+             operatorStr.contains("Highways England", ignoreCase = true)) &&
              ref != null) {
             liveImgUrl = "https://public.highwaystrafficcameras.co.uk/cctvpublicaccess/images/${ref.padStart(5, '0')}.jpg"
         }
@@ -543,9 +552,8 @@ class MapsActivity : AppCompatActivity() {
                 tags["surveillance:type"]?.contains("traffic", ignoreCase = true) == true ||
                 tags["camera:type"]?.contains("traffic", ignoreCase = true) == true ||
                 tags["surveillance:kind"]?.contains("traffic", ignoreCase = true) == true ||
-                liveImgUrl != null // Guarantee it renders red if we have a live feed
-                
-        // 3. Inject the live URL into the tags so your Coil bottom sheet finds it
+                liveImgUrl != null
+
         val mergedTags = tags.toMutableMap()
         if (liveImgUrl != null) {
             mergedTags["liveImageUrl"] = liveImgUrl
@@ -565,9 +573,7 @@ class MapsActivity : AppCompatActivity() {
     }
 
     private fun buildOverpassApi(): OverpassApi {
-        // Overpass answers HTTP 406 to OkHttp's default User-Agent, so identify the app.
         val client = OkHttpClient.Builder()
-            // Overpass can be slow when it is busy; the defaults time out too eagerly.
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .addInterceptor { chain ->
@@ -580,7 +586,6 @@ class MapsActivity : AppCompatActivity() {
             .build()
 
         return Retrofit.Builder()
-            // Only a placeholder: every call passes its full endpoint URL via @Url.
             .baseUrl(OVERPASS_BASE_URL)
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
@@ -597,12 +602,12 @@ class MapsActivity : AppCompatActivity() {
         walesOverlay.items.clear()
         niOverlay.items.clear()
         essexOverlay.items.clear()
+        webcamOverlay.items.clear()
 
         val nodes = entities.map { entity ->
             val node = entity.toNode()
             val geoPoint = GeoPoint(node.lat, node.lon)
 
-            // Render field-of-view (FOV) cone if camera direction is provided in tags
             parseDirection(node.tags)?.let { azimuth ->
                 val fovPolygon = drawFovCone(geoPoint, azimuth)
                 fovOverlay.add(fovPolygon)
@@ -617,10 +622,6 @@ class MapsActivity : AppCompatActivity() {
         updateCountView()
     }
 
-    /**
-     * Centralized routing function that creates osmdroid Markers, assigns the icon color
-     * based on camera type/source, and routes each marker to the appropriate FolderOverlay.
-     */
     private fun renderCamerasToMap(nodes: List<CctvNode>) {
         nodes.forEach { node ->
             Marker(mapView).apply {
@@ -629,6 +630,10 @@ class MapsActivity : AppCompatActivity() {
                 snippet = if (node.operator.isNotBlank() || node.type.isNotBlank()) "${node.operator} - ${node.type}" else ""
 
                 when {
+                    node.isWebcam -> {
+                        icon = markerIcon(WEBCAM_COLOR)
+                        webcamOverlay.add(this)
+                    }
                     node.source == SOURCE_NATIONAL_HIGHWAYS -> {
                         icon = markerIcon(HIGHWAY_COLOR)
                         highwayOverlay.add(this)
@@ -669,7 +674,6 @@ class MapsActivity : AppCompatActivity() {
         mapView.invalidate()
     }
 
-    /** Extracts camera direction angle in degrees from tags if present. */
     private fun parseDirection(tags: Map<String, String>): Double? {
         val dirStr = tags["camera:direction"]
             ?: tags["direction"]
@@ -700,9 +704,8 @@ class MapsActivity : AppCompatActivity() {
         }
     }
 
-    /** Projects a coordinate outward given distance in meters and bearing in degrees. */
     private fun destinationPoint(center: GeoPoint, distanceMeters: Double, bearingDegrees: Double): GeoPoint {
-        val r = 6371000.0 // Earth radius in meters
+        val r = 6371000.0
         val distRad = distanceMeters / r
         val brngRad = Math.toRadians(bearingDegrees)
         val lat1Rad = Math.toRadians(center.latitude)
@@ -720,7 +723,6 @@ class MapsActivity : AppCompatActivity() {
         return GeoPoint(Math.toDegrees(lat2Rad), Math.toDegrees(lon2Rad))
     }
 
-    /** Draws a semi-transparent Field-of-View (FOV) polygon cone onto the map. */
     private fun drawFovCone(
         center: GeoPoint,
         azimuthDegree: Double,
@@ -735,7 +737,7 @@ class MapsActivity : AppCompatActivity() {
 
         return Polygon(mapView).apply {
             points = listOf(center, leftPoint, rightPoint, center)
-            fillPaint.color = Color.argb(80, 0, 120, 255) // semi-transparent blue
+            fillPaint.color = Color.argb(80, 0, 120, 255)
             outlinePaint.color = Color.argb(120, 0, 120, 255)
             outlinePaint.strokeWidth = 1.5f
         }
@@ -746,7 +748,6 @@ class MapsActivity : AppCompatActivity() {
         updateCountView()
     }
 
-    /** Shows how much is on the map and whether a refresh is still in flight. */
     private fun updateCountView() {
         val summary = resources.getQuantityString(
             R.plurals.camera_count,
@@ -763,8 +764,57 @@ class MapsActivity : AppCompatActivity() {
 
     private fun showCameraBottomSheet(node: CctvNode) {
         val bottomSheetDialog = BottomSheetDialog(this)
-        
-        if (node.isTrafficCamera && !node.imageUrl.isNullOrBlank()) {
+
+        if (node.isWebcam && node.streamType.equals("HLS", ignoreCase = true) && !node.streamUrl.isNullOrBlank()) {
+            val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_webcam, null)
+            val tvLocation = view.findViewById<TextView>(R.id.tvWebcamLocation)
+            val playerView = view.findViewById<PlayerView>(R.id.webcamPlayerView)
+            val tvStatus = view.findViewById<TextView>(R.id.tvWebcamStatus)
+            tvLocation.text = node.titleStr
+
+            activeWebcamPlayer?.release()
+            val player = ExoPlayer.Builder(this).build()
+            activeWebcamPlayer = player
+            playerView.player = player
+            player.setMediaItem(MediaItem.fromUri(node.streamUrl))
+            player.prepare()
+            player.playWhenReady = true
+            tvStatus.text = "LIVE HLS STREAM • ${node.operator}"
+
+            bottomSheetDialog.setOnDismissListener {
+                if (activeWebcamPlayer === player) {
+                    player.release()
+                    activeWebcamPlayer = null
+                }
+            }
+            bottomSheetDialog.setContentView(view)
+        } else if (node.isWebcam) {
+            val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_webcam_external, null)
+            view.findViewById<TextView>(R.id.tvExternalWebcamSource).text = "PUBLIC WEBCAM • ${node.streamType ?: "WEB"}"
+            view.findViewById<TextView>(R.id.tvExternalWebcamTitle).text = node.titleStr
+            val webcamView = view.findViewById<WebView>(R.id.webcamWebView)
+            webcamView.settings.javaScriptEnabled = true
+            webcamView.settings.domStorageEnabled = true
+            webcamView.settings.mediaPlaybackRequiresUserGesture = false
+            webcamView.settings.loadWithOverviewMode = true
+            webcamView.settings.useWideViewPort = true
+            webcamView.webViewClient = WebViewClient()
+            val pageUrl = node.streamUrl?.takeIf { it.isNotBlank() } ?: node.websiteUrl
+            if (!pageUrl.isNullOrBlank()) {
+                val urlToLoad = toEmbeddedWebcamUrl(pageUrl)
+                // Add a WebChromeClient so full screen or inline video play is supported nicely
+                webcamView.webChromeClient = android.webkit.WebChromeClient()
+                // Provide referer so Twitch/YouTube embeds don't fail identity checks
+                val extraHeaders = mutableMapOf<String, String>()
+                extraHeaders["Referer"] = "https://www.cmassets.co.uk/"
+                webcamView.loadUrl(urlToLoad, extraHeaders)
+            }
+            bottomSheetDialog.setOnDismissListener {
+                webcamView.stopLoading()
+                webcamView.destroy()
+            }
+            bottomSheetDialog.setContentView(view)
+        } else if (node.isTrafficCamera && !node.imageUrl.isNullOrBlank()) {
             val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_camera, null)
             val tvLocation = view.findViewById<TextView>(R.id.tvCameraLocation)
             val ivFeed = view.findViewById<ImageView>(R.id.ivCameraFeed)
@@ -824,14 +874,12 @@ class MapsActivity : AppCompatActivity() {
             }
 
             btnVerifyImagery.setOnClickListener {
-                // Open street imagery map or street view based on lat/lon
                 val uri = Uri.parse("google.streetview:cbll=${node.lat},${node.lon}")
                 val intent = Intent(Intent.ACTION_VIEW, uri)
                 intent.setPackage("com.google.android.apps.maps")
                 if (intent.resolveActivity(packageManager) != null) {
                     startActivity(intent)
                 } else {
-                    // Fallback to browser
                     val browserUri = Uri.parse("https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${node.lat},${node.lon}")
                     startActivity(Intent(Intent.ACTION_VIEW, browserUri))
                 }
@@ -842,7 +890,15 @@ class MapsActivity : AppCompatActivity() {
         bottomSheetDialog.show()
     }
 
-    /** Explains the marker colours, since they now come from different sources. */
+    private fun toEmbeddedWebcamUrl(url: String): String {
+        val match = Regex("(?:youtube\\.com/watch\\?v=|youtu\\.be/)([A-Za-z0-9_-]{6,})").find(url)
+        return if (match != null) {
+            "https://www.youtube-nocookie.com/embed/${match.groupValues[1]}?autoplay=1&playsinline=1"
+        } else {
+            url
+        }
+    }
+
     private fun showLegend() {
         val dot = "\u25CF"
         val osmLabel = getString(R.string.legend_osm)
@@ -852,13 +908,15 @@ class MapsActivity : AppCompatActivity() {
         val walesLabel = getString(R.string.legend_wales)
         val niLabel = getString(R.string.legend_ni)
         val essexLabel = getString(R.string.legend_essex)
-        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $londonLabel   $dot $highwayLabel   $dot $walesLabel   $dot $niLabel   $dot $essexLabel")
+        val webcamLabel = getString(R.string.legend_webcam)
+        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $londonLabel   $dot $highwayLabel   $dot $walesLabel   $dot $niLabel   $dot $essexLabel   $dot $webcamLabel")
         val councilDot = legend.indexOf(dot, 1)
         val londonDot = legend.indexOf(dot, councilDot + 1)
         val highwayDot = legend.indexOf(dot, londonDot + 1)
         val walesDot = legend.indexOf(dot, highwayDot + 1)
         val niDot = legend.indexOf(dot, walesDot + 1)
         val essexDot = legend.indexOf(dot, niDot + 1)
+        val webcamDot = legend.indexOf(dot, essexDot + 1)
         legend.setSpan(ForegroundColorSpan(MARKER_COLOR), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(
             ForegroundColorSpan(COUNCIL_COLOR),
@@ -881,10 +939,10 @@ class MapsActivity : AppCompatActivity() {
         legend.setSpan(ForegroundColorSpan(WALES_COLOR), walesDot, walesDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(ForegroundColorSpan(NI_COLOR), niDot, niDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(ForegroundColorSpan(ESSEX_COLOR), essexDot, essexDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        legend.setSpan(ForegroundColorSpan(WEBCAM_COLOR), webcamDot, webcamDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legendView.text = legend
     }
 
-    /** Simple coloured dot marking a camera on the map. */
     private fun markerIcon(color: Int): Drawable {
         val density = resources.displayMetrics.density
         val size = (MARKER_SIZE_DP * density).toInt()
@@ -915,46 +973,32 @@ class MapsActivity : AppCompatActivity() {
         const val UNKNOWN_OPERATOR = "Unknown Operator"
         const val UNKNOWN_TYPE = "Unknown Type"
         const val OVERPASS_BASE_URL = "https://overpass-api.de/"
-        /**
-         * Reliable global Overpass instances on distinct host networks.
-         */
         val OVERPASS_ENDPOINTS = listOf(
-            "https://overpass-api.de/api/interpreter",       // German main cluster
-            "https://overpass.kumi.systems/api/interpreter", // Independent mirror (Japan/Global CDN)
-            "https://overpass.private.coffee/api/interpreter", // Independent community mirror
-            "https://lz4.overpass-api.de/api/interpreter"    // Fallback cluster node
+            "https://overpass-api.de/api/interpreter",
+            "https://overpass.kumi.systems/api/interpreter",
+            "https://overpass.private.coffee/api/interpreter",
+            "https://lz4.overpass-api.de/api/interpreter"
         )
 
         const val MARKER_SIZE_DP = 16
         const val MARKER_STROKE_DP = 2
         const val VIEWPORT_DEBOUNCE_MS = 1500L
 
-        /** How long the primary endpoint gets before a mirror is asked in parallel. */
         const val HEDGE_DELAY_MS = 5_000L
         const val MIN_FETCH_INTERVAL_MS = 3_000L
 
-        /**
-         * Retries for a failed fetch, backing off to a minute apart. After the last attempt the
-         * app waits for the map to move rather than polling a free service in the background.
-         */
         const val RETRY_BASE_DELAY_MS = 5_000L
         const val MAX_RETRY_DELAY_MS = 60_000L
         const val MAX_RETRY_ATTEMPTS = 6
         const val MAX_QUERY_SPAN_DEGREES = 0.6
         const val BBOX_EPSILON = 1e-6
-        /** Amber stands out against OpenStreetMap's pale basemap. */
         val MARKER_COLOR: Int = "#FB8C00".toColorInt()
-        /** Blue reads as "official" against the amber OpenStreetMap markers. */
         val COUNCIL_COLOR: Int = "#1E88E5".toColorInt()
-        /** Red for live traffic cameras. */
         val TRAFFIC_COLOR: Int = "#D32F2F".toColorInt()
-        /** Purple for National Highways cameras, distinct from London/TfL red. */
         val HIGHWAY_COLOR: Int = "#7B1FA2".toColorInt()
-        /** Teal for Traffic Wales cameras. */
         val WALES_COLOR: Int = "#00897B".toColorInt()
-        /** Green for Northern Ireland cameras. */
         val NI_COLOR: Int = "#388E3C".toColorInt()
-        /** Magenta for Essex Highways cameras. */
         val ESSEX_COLOR: Int = "#C2185B".toColorInt()
+        val WEBCAM_COLOR: Int = "#00BCD4".toColorInt()
     }
 }

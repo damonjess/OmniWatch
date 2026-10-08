@@ -66,6 +66,11 @@ dependencies {
 
     // Coil for fast, asynchronous image loading
     implementation("io.coil-kt:coil:2.4.0")
+
+    // Android Media3 player for public HLS webcam streams.
+    implementation("androidx.media3:media3-exoplayer:1.6.1")
+    implementation("androidx.media3:media3-exoplayer-hls:1.6.1")
+    implementation("androidx.media3:media3-ui:1.6.1")
     
     // Material components for BottomSheetDialog
     implementation("com.google.android.material:material:1.11.0")

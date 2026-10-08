@@ -23,6 +23,10 @@
     <string name="legend_wales">Traffic Wales</string>
     <string name="legend_ni">TrafficWatchNI</string>
     <string name="legend_essex">Essex Highways</string>
+    <string name="legend_webcam">Public Webcams</string>
+    <string name="public_webcams">Public Webcams</string>
+    <string name="search_webcams_hint">Search webcams, towns, or operators</string>
+    <string name="webcam_directory_subtitle">Select a webcam to centre the map on its marker.</string>
     <string name="verify_with_street_imagery">Verify with Street Imagery</string>
     <string name="locate_me">Locate Me</string>
 </resources>

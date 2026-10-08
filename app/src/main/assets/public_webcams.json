@@ -1,0 +1,42 @@
+[
+  {
+    "id": "public-webcam-eernewoude-princenhof",
+    "latitude": 53.132235,
+    "longitude": 5.940653,
+    "name": "Eernewoude webcam — Hotel Princenhof",
+    "operator": "Public Webcam",
+    "streamUrl": "https://5b8d2cbe62ad6.streamlock.net/live/eernewoude.stream/playlist.m3u8",
+    "streamType": "HLS",
+    "websiteUrl": "https://webcam-friesemeren.nl/pages/cameras/eernewoude.php"
+  },
+  {
+    "id": "public-webcam-ramsgate-royal-harbour",
+    "latitude": 51.3316,
+    "longitude": 1.4197,
+    "name": "Ramsgate Royal Harbour",
+    "operator": "Royal Harbour Live",
+    "streamUrl": "https://www.youtube.com/watch?v=H3A2RSYTzdI",
+    "streamType": "WEB",
+    "websiteUrl": "https://www.youtube.com/watch?v=H3A2RSYTzdI"
+  },
+  {
+    "id": "public-webcam-lyme-regis-seafront",
+    "latitude": 50.7260,
+    "longitude": -2.9348,
+    "name": "Lyme Regis seafront and Cobb Harbour",
+    "operator": "Visit Dorset",
+    "streamUrl": "https://www.youtube.com/watch?v=rulGLEdCHZU",
+    "streamType": "WEB",
+    "websiteUrl": "https://www.visit-dorset.com/lyme-regis/webcams/"
+  },
+  {
+    "id": "public-webcam-cmal-scotland-harbours",
+    "latitude": 56.4110,
+    "longitude": -5.4720,
+    "name": "CMAL Scottish harbour webcams",
+    "operator": "Caledonian Maritime Assets",
+    "streamUrl": "https://player.twitch.tv/?channel=cmaloban&parent=www.cmassets.co.uk&autoplay=true",
+    "streamType": "WEB",
+    "websiteUrl": "https://www.cmassets.co.uk/live-webcams/"
+  }
+]

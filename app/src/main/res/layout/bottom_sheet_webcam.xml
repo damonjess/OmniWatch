@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/black">
+
+    <TextView
+        android:id="@+id/tvWebcamLocation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:id="@+id/tvWebcamSource"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="PUBLIC WEBCAM • HLS"
+        android:textColor="#00BCD4"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="12dp" />
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/webcamPlayerView"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:background="#111111"
+        android:keepScreenOn="true" />
+
+    <TextView
+        android:id="@+id/tvWebcamStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Connecting to public webcam…"
+        android:textColor="#CBD5E1"
+        android:textSize="13sp"
+        android:layout_marginTop="10dp" />
+</LinearLayout>

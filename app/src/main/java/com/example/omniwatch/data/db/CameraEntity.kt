@@ -25,6 +25,9 @@ data class CameraEntity(
     fun toNode(): CctvNode {
         val tagsMap = CameraTags.decode(tagsJson)
         val liveImg = tagsMap["liveImageUrl"] ?: tagsMap["imageUrl"] ?: tagsMap["image"] ?: tagsMap["url"]
+        val streamUrl = tagsMap["streamUrl"]
+        val streamType = tagsMap["streamType"]
+        val websiteUrl = tagsMap["websiteUrl"]
         val isTraffic = isTrafficCamera ||
                 source == "TRAFFIC" ||
                 source == "National Highways" ||
@@ -43,9 +46,13 @@ data class CameraEntity(
             operator = operator,
             type = type,
             imageUrl = liveImg,
+            streamUrl = streamUrl,
+            streamType = streamType,
+            websiteUrl = websiteUrl,
             tags = tagsMap,
             isCouncil = source == CouncilDataLoader.SOURCE_COUNCIL,
-            isTrafficCamera = isTraffic
+            isTrafficCamera = isTraffic,
+            isWebcam = source == "PUBLIC_WEBCAM",
         )
     }
 }

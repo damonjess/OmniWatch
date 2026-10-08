@@ -34,6 +34,11 @@
             android:exported="false"
             android:theme="@style/Theme.OmniWatch"
             android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".PublicWebcamsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.OmniWatch" />
     </application>
 
 </manifest>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/black">
+
+    <TextView
+        android:id="@+id/tvExternalWebcamSource"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#00BCD4"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvExternalWebcamTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="@android:color/white"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <WebView
+        android:id="@+id/webcamWebView"
+        android:layout_width="match_parent"
+        android:layout_height="420dp"
+        android:layout_marginTop="12dp"
+        android:background="#111111" />
+</LinearLayout>
