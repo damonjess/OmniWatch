@@ -34,9 +34,14 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.ui.PlayerView
 import coil.imageLoader
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.omniwatch.data.db.AppDatabase
 import com.example.omniwatch.data.db.CameraEntity
@@ -384,10 +389,14 @@ class MapsActivity : AppCompatActivity() {
 
     private fun refreshViewport(force: Boolean = false) {
         if (!::mapView.isInitialized) return
-        val bounds = mapView.boundingBox.toViewportBounds()?.clampedTo(MAX_QUERY_SPAN_DEGREES)
-            ?: return
+        val viewport = mapView.boundingBox.toViewportBounds() ?: return
+        // Only the Overpass request is limited to a bounded area, because it queries a shared
+        // public API. The local camera table is cheap to query, so it is asked for the whole
+        // viewport: clamping the render bounds hid every camera outside the central slice, which
+        // kept most of the 5,717-camera TrafficVision catalogue off the map.
+        val queryBounds = viewport.clampedTo(MAX_QUERY_SPAN_DEGREES) ?: return
 
-        if (!force && bounds.coversSameAreaAs(lastFetchedBbox, BBOX_EPSILON)) return
+        if (!force && queryBounds.coversSameAreaAs(lastFetchedBbox, BBOX_EPSILON)) return
 
         val elapsed = SystemClock.elapsedRealtime() - lastFetchAt
         if (!force && elapsed < MIN_FETCH_INTERVAL_MS) {
@@ -403,23 +412,23 @@ class MapsActivity : AppCompatActivity() {
             ensureCouncilData()
             ensurePublicWebcamData()
             ensureTrafficVisionData()
-            renderViewport(bounds)
+            renderViewport(viewport)
 
             // Cleared first so the header never shows a reason left over from an earlier viewport.
             lastFailure = null
-            val live = fetchOverpassCameras(bounds)
+            val live = fetchOverpassCameras(queryBounds)
             if (live != null) {
                 failedAttempts = 0
                 if (live.isNotEmpty()) {
                     withContext(Dispatchers.IO) { database.cameraDao().insertCameras(live) }
                 }
-                lastFetchedBbox = bounds
+                lastFetchedBbox = queryBounds
             }
 
             if (isActive) {
                 fetchFailed = live == null
                 if (fetchFailed) scheduleRetry()
-                renderViewport(bounds)
+                renderViewport(viewport)
                 setFetching(false)
             }
         }
@@ -816,20 +825,25 @@ class MapsActivity : AppCompatActivity() {
     private fun showCameraBottomSheet(node: CctvNode) {
         val bottomSheetDialog = BottomSheetDialog(this)
 
-        if (canPlayWebcamLive(node)) {
-            showLiveWebcamSheet(bottomSheetDialog, node)
-        } else if ((node.isWebcam || node.imageUrl.isNullOrBlank()) && hasEmbeddableWebcamPage(node)) {
-            showExternalWebcamSheet(bottomSheetDialog, node)
-        } else if (!node.imageUrl.isNullOrBlank()) {
-            showTrafficCameraSheet(bottomSheetDialog, node)
-        } else if (hasEmbeddableWebcamPage(node)) {
-            showExternalWebcamSheet(bottomSheetDialog, node)
-        } else {
-            showDetailSheet(bottomSheetDialog, node)
+        when {
+            canPlayDirectStream(node) -> showLiveWebcamSheet(bottomSheetDialog, node)
+            shouldEmbedPlayer(node) && hasEmbeddableWebcamPage(node) ->
+                showExternalWebcamSheet(bottomSheetDialog, node)
+            !node.imageUrl.isNullOrBlank() -> showTrafficCameraSheet(bottomSheetDialog, node)
+            hasEmbeddableWebcamPage(node) -> showExternalWebcamSheet(bottomSheetDialog, node)
+            else -> showDetailSheet(bottomSheetDialog, node)
         }
 
         bottomSheetDialog.show()
     }
+
+    /**
+     * True when the entry should open an embedded player page rather than a still image. Traffic
+     * camera entries that publish a player page or a YouTube id qualify even though they also
+     * carry a thumbnail; a plain snapshot entry does not.
+     */
+    private fun shouldEmbedPlayer(node: CctvNode): Boolean =
+        node.isWebcam || node.imageUrl.isNullOrBlank() || !node.tags["youtubeVideoId"].isNullOrBlank()
 
     private fun showExternalWebcamSheet(bottomSheetDialog: BottomSheetDialog, node: CctvNode) {
         val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_webcam_external, null)
@@ -983,25 +997,50 @@ class MapsActivity : AppCompatActivity() {
             else -> url
         }
 
-        val requestBuilder = ImageRequest.Builder(this)
-            .data(secureUrl)
-            .crossfade(true)
-            .addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
-            .addHeader("Referer", "https://trafficvision.live/")
+        fun buildRequest(refresh: Boolean): ImageRequest {
+            val builder = ImageRequest.Builder(this)
+                .data(secureUrl)
+                .addHeader("User-Agent", BROWSER_USER_AGENT)
+                .addHeader("Referer", TRAFFICVISION_REFERER)
 
-        if (node.source == SOURCE_NATIONAL_HIGHWAYS || secureUrl.contains("amazonaws.com") || secureUrl.contains("highwaystrafficcameras.co.uk")) {
-            requestBuilder.addHeader("Ocp-Apim-Subscription-Key", BuildConfig.TRAFFIC_API_KEY)
+            if (node.source == SOURCE_NATIONAL_HIGHWAYS || secureUrl.contains("amazonaws.com") || secureUrl.contains("highwaystrafficcameras.co.uk")) {
+                builder.addHeader("Ocp-Apim-Subscription-Key", BuildConfig.TRAFFIC_API_KEY)
+            }
+
+            return if (refresh) {
+                // A still-image camera keeps serving new frames, so the sheet re-fetches them
+                // instead of showing whatever Coil cached when the marker was first tapped.
+                builder.crossfade(false)
+                    .memoryCachePolicy(CachePolicy.DISABLED)
+                    .diskCachePolicy(CachePolicy.DISABLED)
+                    .target(ivFeed)
+                    .build()
+            } else {
+                builder.crossfade(true)
+                    .placeholder(android.R.drawable.ic_menu_report_image)
+                    .error(android.R.drawable.ic_delete)
+                    .target(ivFeed)
+                    .build()
+            }
         }
 
-        val request = requestBuilder
-            .placeholder(android.R.drawable.ic_menu_report_image)
-            .error(android.R.drawable.ic_delete)
-            .target(ivFeed)
-            .build()
-
-        ivFeed.context.imageLoader.enqueue(request)
+        ivFeed.context.imageLoader.enqueue(buildRequest(refresh = false))
         tvLiveIndicator.visibility = View.VISIBLE
         bottomSheetDialog.setContentView(view)
+
+        // Snapshot-only cameras publish a single image URL, so the sheet polls it while it is open
+        // to keep the view current rather than frozen on the first frame.
+        if (secureUrl.isNotBlank()) {
+            val refreshHandler = Handler(Looper.getMainLooper())
+            val refresh = object : Runnable {
+                override fun run() {
+                    ivFeed.context.imageLoader.enqueue(buildRequest(refresh = true))
+                    refreshHandler.postDelayed(this, SNAPSHOT_REFRESH_MS)
+                }
+            }
+            refreshHandler.postDelayed(refresh, SNAPSHOT_REFRESH_MS)
+            bottomSheetDialog.setOnDismissListener { refreshHandler.removeCallbacksAndMessages(null) }
+        }
     }
 
     private fun showDetailSheet(bottomSheetDialog: BottomSheetDialog, node: CctvNode) {
@@ -1057,11 +1096,15 @@ class MapsActivity : AppCompatActivity() {
     private fun hasEmbeddableWebcamPage(node: CctvNode): Boolean =
         WebcamPages.embeddableUrl(node.streamUrl ?: node.websiteUrl) != null
 
-    /** Webcams that play without a browser: a direct HLS playlist or a resolvable operator page. */
-    private fun canPlayWebcamLive(node: CctvNode): Boolean {
+    /**
+     * True when the in-app player can open the feed without a browser page: a direct HLS or MP4
+     * stream (TrafficVision video and hybrid cameras, HLS public webcams) or a Skyline page whose
+     * signed playlist is resolved first.
+     */
+    private fun canPlayDirectStream(node: CctvNode): Boolean {
         val streamUrl = node.streamUrl ?: return false
         if (streamUrl.isBlank()) return false
-        return node.streamType.equals(WEBCAM_STREAM_HLS, ignoreCase = true) ||
+        return CameraStreams.isDirectVideo(streamUrl, node.streamType) ||
             PublicWebcamStreams.isSkylinePage(streamUrl)
     }
 
@@ -1078,7 +1121,11 @@ class MapsActivity : AppCompatActivity() {
         val tvStatus = view.findViewById<TextView>(R.id.tvWebcamStatus)
 
         tvLocation.text = node.titleStr
-        tvSource.text = getString(R.string.webcam_source_live)
+        tvSource.text = if (node.source == SOURCE_TRAFFICVISION) {
+            getString(R.string.traffic_camera_source_live)
+        } else {
+            getString(R.string.webcam_source_live)
+        }
         tvStatus.text = getString(R.string.webcam_connecting)
 
         activeWebcamPlayer?.release()
@@ -1086,6 +1133,7 @@ class MapsActivity : AppCompatActivity() {
 
         var player: ExoPlayer? = null
         var dismissed = false
+        var fellBackToSnapshot = false
         bottomSheetDialog.setOnDismissListener {
             dismissed = true
             player?.release()
@@ -1095,7 +1143,7 @@ class MapsActivity : AppCompatActivity() {
         bottomSheetDialog.show()
 
         val directUrl = node.streamUrl
-            ?.takeIf { node.streamType.equals(WEBCAM_STREAM_HLS, ignoreCase = true) }
+            ?.takeIf { CameraStreams.isDirectVideo(it, node.streamType) }
         lifecycleScope.launch {
             val playUrl = directUrl
                 ?: node.streamUrl?.let { PublicWebcamStreams.resolveLiveHlsUrl(it) }
@@ -1107,7 +1155,9 @@ class MapsActivity : AppCompatActivity() {
             // a dismissed sheet would leak it because the dismiss listener has already run.
             if (dismissed || isFinishing || isDestroyed) return@launch
 
-            val newPlayer = ExoPlayer.Builder(this@MapsActivity).build()
+            val newPlayer = ExoPlayer.Builder(this@MapsActivity)
+                .setMediaSourceFactory(mediaSourceFactory(node))
+                .build()
             player = newPlayer
             activeWebcamPlayer = newPlayer
             playerView.player = newPlayer
@@ -1122,21 +1172,60 @@ class MapsActivity : AppCompatActivity() {
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
-                    Log.w(TAG, "Live webcam playback failed for ${node.titleStr}", error)
-                    tvStatus.text = getString(R.string.webcam_playback_failed)
+                    Log.w(TAG, "Live playback failed for ${node.titleStr}", error)
+                    // Video and hybrid cameras also publish a snapshot, so a stream that has gone
+                    // offline falls back to the still frame instead of a dead player.
+                    val snapshot = node.imageUrl
+                    if (!fellBackToSnapshot && !dismissed && !snapshot.isNullOrBlank()) {
+                        fellBackToSnapshot = true
+                        tvStatus.text = getString(R.string.webcam_snapshot_fallback)
+                        bottomSheetDialog.dismiss()
+                        showSnapshotSheet(node)
+                    } else {
+                        tvStatus.text = getString(R.string.webcam_playback_failed)
+                    }
                 }
             })
             // Some cameras only expose the .m3u8 in the token query, so the HLS type is stated
-            // explicitly rather than inferred from the URI.
-            newPlayer.setMediaItem(
-                MediaItem.Builder()
-                    .setUri(playUrl)
-                    .setMimeType(MimeTypes.APPLICATION_M3U8)
-                    .build()
-            )
+            // explicitly rather than inferred from the URI. A progressive MP4 is left for the
+            // player to infer from the file itself.
+            val mediaItem = MediaItem.Builder().setUri(playUrl)
+            val kind = CameraStreams.kind(playUrl, node.streamType)
+            if (kind == CameraStreams.HLS) {
+                mediaItem.setMimeType(MimeTypes.APPLICATION_M3U8)
+            }
+            // A progressive MP4 is a short agency clip, so it is looped to read as a live feed.
+            if (kind == CameraStreams.MP4) {
+                newPlayer.repeatMode = Player.REPEAT_MODE_ONE
+            }
+            newPlayer.setMediaItem(mediaItem.build())
             newPlayer.prepare()
             newPlayer.playWhenReady = true
         }
+    }
+
+    /** Opens the still-image sheet, used for snapshot cameras and as the video fallback. */
+    private fun showSnapshotSheet(node: CctvNode) {
+        if (isFinishing || isDestroyed) return
+        val dialog = BottomSheetDialog(this)
+        showTrafficCameraSheet(dialog, node)
+        dialog.show()
+    }
+
+    /**
+     * Builds the media source for a player sheet. TrafficVision's own HLS proxy rejects requests
+     * that do not carry the site Referer (HTTP 403), so those headers are attached for its cameras
+     * only; public webcams keep the player's default request headers.
+     */
+    private fun mediaSourceFactory(node: CctvNode): MediaSource.Factory {
+        if (node.source != SOURCE_TRAFFICVISION) return DefaultMediaSourceFactory(this)
+        val httpFactory = DefaultHttpDataSource.Factory().setDefaultRequestProperties(
+            mapOf(
+                "Referer" to TRAFFICVISION_REFERER,
+                "User-Agent" to BROWSER_USER_AGENT,
+            )
+        )
+        return DefaultMediaSourceFactory(DefaultDataSource.Factory(this, httpFactory))
     }
 
     /** Selecting a directory entry opens its feed straight away instead of a second marker tap. */
@@ -1232,7 +1321,10 @@ class MapsActivity : AppCompatActivity() {
 
     private companion object {
         const val TAG = "MapsActivity"
-        const val WEBCAM_STREAM_HLS = "HLS"
+        const val SNAPSHOT_REFRESH_MS = 7_000L
+        const val TRAFFICVISION_REFERER = "https://trafficvision.live/"
+        const val BROWSER_USER_AGENT =
+            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
         const val SOURCE_OVERPASS = "OVERPASS"
         const val SOURCE_TRAFFIC = "TRAFFIC"
         const val SOURCE_NATIONAL_HIGHWAYS = "National Highways"
@@ -1264,7 +1356,7 @@ class MapsActivity : AppCompatActivity() {
         val WALES_COLOR: Int = "#00897B".toColorInt()
         val NI_COLOR: Int = "#388E3C".toColorInt()
         val ESSEX_COLOR: Int = "#C2185B".toColorInt()
-        val TRAFFICVISION_COLOR: Int = "#F9A825".toColorInt()
+        val TRAFFICVISION_COLOR: Int = "#AEEA00".toColorInt()
         val WEBCAM_COLOR: Int = "#00BCD4".toColorInt()
     }
 }

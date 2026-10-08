@@ -65,8 +65,21 @@ The endpoint returned HTTP 200 with `image/jpeg` during verification.
 
 - Added a filtered `trafficvision_uk_ie.json` asset from TrafficVision.Live's public catalogue.
 - The asset contains 5,717 records: 5,431 United Kingdom and 286 Ireland cameras.
-- TrafficVision markers use a gold/yellow marker (`#F9A825`) and the legend label `TrafficVision UK/Ireland`.
+- TrafficVision markers use a lime marker (`#AEEA00`) and the legend label `TrafficVision UK/Ireland`. The original gold (`#F9A825`) sat too close to the OpenStreetMap orange (`#FB8C00`) for the two overlays to be told apart on the map, so TrafficVision was moved to the one hue the other eight sources leave free.
 - Image and hybrid feeds open in the existing in-app live-image sheet. Other feed metadata is retained in the detail card for future provider-specific playback support.
 - Only UK and Ireland records are bundled; the worldwide catalogue is not loaded into the APK.
 - Source: `https://trafficvision.live/`
 - The filtered catalogue was generated from TrafficVision's public catalogue manifest and shards on 2026-10-08.
+
+### TrafficVision playback fix
+
+- The first import kept only `imageUrl` and iframe `playerUrl`, so every TrafficVision marker opened a single still image. The catalogue's actual playback fields were dropped.
+- Re-pulled the catalogue from the site's own endpoints (`POST /api/session` for an `x-tv-session` token, then `/api/catalog/manifest` and `/api/catalog/shards/<hash>.json`) and enriched `trafficvision_uk_ie.json` in place: `streamUrl` now carries the catalogue `videoUrl` for all 984 hybrid/video feeds, and `youtubeVideoId` is present on the 53 YouTube feeds. The 5,717 UK/Ireland records are unchanged otherwise.
+- `TrafficVisionDataLoader` writes `streamType` (`HLS` or `MP4`) from the stream URL and exposes the YouTube id plus a watch URL, so the app can tell a playlist from a file from a page.
+- New `CameraStreams` classifies a URL into `HLS`, `MP4`, or `PAGE` (pure, unit tested).
+- Tapping a marker now routes by feed: direct **HLS/MP4** plays in the in-app Media3 player, an operator page or YouTube id opens the embedded player, and a snapshot-only camera opens the live-image sheet, which now re-fetches the frame every 7 seconds instead of freezing on the first one.
+- The player attaches `Referer: https://trafficvision.live/` (and a browser User-Agent) for TrafficVision cameras only, because `media.trafficvision.live` answers 403 without it. Public webcam streams keep their existing headers.
+- Progressive MP4 (TfL JamCams) loops, since each agency file is a short clip rather than a continuous stream.
+- Every video camera also carries a snapshot, so a stream that has gone offline (several ozolio relays now answer 404) falls back to the still image with `Live video unavailable — showing the latest image instead` rather than a dead player.
+- TrafficVision markers were changed from gold to lime (`#AEEA00`) so they are no longer mistaken for the orange OpenStreetMap markers.
+- Tests: `CameraStreamsTest` covers the classifier, `TrafficVisionDataLoaderTest` asserts the bundled catalogue keeps its video and YouTube fields, and `CameraEntityTest` checks a hybrid camera maps to a playable HLS node. `./gradlew testDebugUnitTest assembleDebug` passes (51 unit tests).

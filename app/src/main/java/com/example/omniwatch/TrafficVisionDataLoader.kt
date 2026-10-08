@@ -23,6 +23,8 @@ object TrafficVisionDataLoader {
         val feedType: String = "",
         val country: String = "",
         val source: String = "",
+        // Optional: Gson leaves absent keys null, and most records are not YouTube feeds.
+        val youtubeVideoId: String? = null,
         val tags: Map<String, String> = emptyMap(),
     )
 
@@ -38,10 +40,22 @@ object TrafficVisionDataLoader {
 
             val tags = record.tags.toMutableMap()
             if (record.imageUrl.isNotBlank()) tags["liveImageUrl"] = record.imageUrl
-            if (record.streamUrl.isNotBlank()) tags["streamUrl"] = record.streamUrl
+            if (record.streamUrl.isNotBlank()) {
+                tags["streamUrl"] = record.streamUrl
+                // Stated explicitly so the player picks HLS or progressive MP4 from the catalogue
+                // rather than guessing from a URL that may hide its type behind a query string.
+                tags["streamType"] = CameraStreams.kind(record.streamUrl)
+            }
             if (record.playerUrl.isNotBlank()) tags["playerUrl"] = record.playerUrl
-            val webUrl = record.playerUrl.ifBlank { record.streamUrl }.ifBlank { tags["sourceUrl"].orEmpty() }
-            if (webUrl.isNotBlank()) tags["websiteUrl"] = webUrl
+            val youtubeVideoId = record.youtubeVideoId.orEmpty()
+            if (youtubeVideoId.isNotBlank()) {
+                tags["youtubeVideoId"] = youtubeVideoId
+                tags["websiteUrl"] = "https://www.youtube.com/watch?v=$youtubeVideoId"
+            }
+            // A player page is the fallback for anything that is not a direct media stream; the
+            // stream URL is deliberately excluded now that it can hold a playlist or MP4 file.
+            val webUrl = record.playerUrl.ifBlank { tags["sourceUrl"].orEmpty() }
+            if (webUrl.isNotBlank() && tags["websiteUrl"].isNullOrBlank()) tags["websiteUrl"] = webUrl
             if (record.feedType.isNotBlank()) tags["feedType"] = record.feedType
             if (record.country.isNotBlank()) tags["country"] = record.country
             if (record.source.isNotBlank()) tags["sourceNetwork"] = record.source

@@ -48,4 +48,30 @@ class CameraEntityTest {
 
         assertTrue(node.isTrafficCamera)
     }
+
+    @Test
+    fun `trafficvision hybrid camera maps to a playable hls node`() {
+        val camera = CameraEntity(
+            id = "trafficvision_earthcam-0e8ba55957cce32c61b35cab363e93dc",
+            lat = 53.345546,
+            lon = -6.264545,
+            title = "Dublin Cam",
+            operator = "TrafficVision / earthcam",
+            type = "Public Traffic Camera",
+            source = "TrafficVision",
+            tagsJson = CameraTags.encode(
+                mapOf(
+                    "liveImageUrl" to "https://www.earthcam.com/cams/includes/image.php?img=x",
+                    "streamUrl" to "https://media.trafficvision.live/earthcam/master.m3u8?u=x",
+                    "streamType" to "HLS",
+                )
+            ),
+            isTrafficCamera = true,
+        )
+
+        val node = camera.toNode()
+
+        assertEquals("HLS", node.streamType)
+        assertTrue(CameraStreams.isDirectVideo(node.streamUrl, node.streamType))
+    }
 }
