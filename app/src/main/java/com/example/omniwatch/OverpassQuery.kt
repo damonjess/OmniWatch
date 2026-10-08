@@ -33,9 +33,8 @@ object OverpassQuery {
     fun build(bounds: ViewportBounds): String {
         val box = bounds.toOverpassBbox()
         val union = SELECTORS.joinToString("") { it.format(box) }
-        // The union block itself must be closed with ");" before the output statement. Without
-        // that semicolon Overpass answers HTTP 400 with "parse error: ';' expected - 'out' found".
-        return "$TIMEOUT_HEADER($union);out center;"
+        // Adding "qt" instructs the server to skip ID sorting
+        return "$TIMEOUT_HEADER($union);out center qt;"
     }
 
     private const val TIMEOUT_HEADER = "[out:json][timeout:25];"

@@ -51,15 +51,15 @@ class OverpassQueryTest {
     @Test
     fun `is a single union request with a timeout and centre points`() {
         assertTrue(query.startsWith("[out:json][timeout:25];("))
-        assertTrue(query.endsWith("out center;"))
+        assertTrue(query.endsWith("out center qt;"))
         // One request, not one per selector.
-        assertEquals(1, Regex("out center;").findAll(query).count())
+        assertEquals(1, Regex("out center qt;").findAll(query).count())
     }
 
     @Test
     fun `matches the query accepted by the live Overpass API`() {
         // Exact string, because Overpass rejects the whole request over one missing semicolon:
-        // a union block has to be closed with ");" before "out center;".
+        // a union block has to be closed with ");" before "out center qt;".
         val expected = "[out:json][timeout:25];(" +
             "nwr[\"man_made\"=\"surveillance\"](53.39,-0.82,53.72,-0.44);" +
             "nwr[\"surveillance\"][\"surveillance\"!=\"no\"](53.39,-0.82,53.72,-0.44);" +
@@ -69,7 +69,7 @@ class OverpassQueryTest {
             "nwr[\"man_made\"=\"webcam\"](53.39,-0.82,53.72,-0.44);" +
             "nwr[\"contact:webcam\"](53.39,-0.82,53.72,-0.44);" +
             "nwr[\"highway\"=\"speed_camera\"](53.39,-0.82,53.72,-0.44);" +
-            ");out center;"
+            ");out center qt;"
 
         assertEquals(expected, OverpassQuery.build(bounds))
     }

@@ -186,25 +186,11 @@ class MapsActivity : AppCompatActivity() {
 
         val tflApi = retrofitTfl.create(TrafficCameraApi::class.java)
 
-        val retrofitNh = Retrofit.Builder()
-            .baseUrl("https://webtris.nationalhighways.co.uk")
-            .client(
-                client.newBuilder()
-                    .addInterceptor { chain ->
-                        chain.proceed(
-                            chain.request().newBuilder()
-                                .header("Ocp-Apim-Subscription-Key", BuildConfig.TRAFFIC_API_KEY)
-                                .build()
-                        )
-                    }
-                    .build()
-            )
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        val nhApi = retrofitNh.create(NationalHighwaysApi::class.java)
-
         lifecycleScope.launch(Dispatchers.IO) {
+            // Clean up any legacy sensor or National Highways WebTRIS entries from database
+            database.cameraDao().clearNationalHighwaysCameras()
+            database.cameraDao().clearSensorCameras()
+
             // Fetch live CCTV cameras with valid visual feeds (e.g., TfL JamCams)
             try {
                 val tflPlaces = tflApi.getLiveCameras()
@@ -247,56 +233,6 @@ class MapsActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to fetch live traffic cameras", e)
-            }
-
-            // Fetch National Highways traffic feeds (e.g., M180, M4, M25, M6)
-            try {
-                val nhResponse = nhApi.getWebtrisSites()
-                val nhEntities = nhResponse.sites.orEmpty().mapNotNull { site ->
-                    if (site.latitude == 0.0 && site.longitude == 0.0) return@mapNotNull null
-                    val title = site.description?.ifBlank { site.name } ?: site.name ?: "National Highways CCTV"
-                    
-                    // Drop any nodes that are just MIDAS or TMU sensors (non-camera traffic sensors)
-                    val isNotSensor = !title.contains("MIDAS", ignoreCase = true) &&
-                            !title.contains("TMU", ignoreCase = true) &&
-                            !(site.name?.contains("MIDAS", ignoreCase = true) == true) &&
-                            !(site.name?.contains("TMU", ignoreCase = true) == true) &&
-                            !(site.description?.contains("MIDAS", ignoreCase = true) == true) &&
-                            !(site.description?.contains("TMU", ignoreCase = true) == true)
-                    if (!isNotSensor) return@mapNotNull null
-
-                    val imageUrl = "https://cctv.trafficengland.com/feeds/cctv/${site.id}.jpg"
-                    if (imageUrl.isBlank()) return@mapNotNull null
-
-                    CameraEntity(
-                        id = "nh_${site.id}",
-                        lat = site.latitude,
-                        lon = site.longitude,
-                        title = title,
-                        operator = "National Highways",
-                        type = "Traffic Camera",
-                        source = "National Highways",
-                        tagsJson = CameraTags.encode(
-                            mapOf(
-                                "liveImageUrl" to imageUrl,
-                                "siteId" to site.id,
-                                "status" to (site.status ?: "Unknown")
-                            )
-                        ),
-                        isTrafficCamera = true
-                    )
-                }
-
-                if (nhEntities.isNotEmpty()) {
-                    database.cameraDao().clearNationalHighwaysCameras()
-                    database.cameraDao().clearSensorCameras()
-                    database.cameraDao().insertCameras(nhEntities)
-                    withContext(Dispatchers.Main) {
-                        refreshViewport(force = true)
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Failed to fetch National Highways traffic feeds", e)
             }
         }
     }
@@ -516,24 +452,44 @@ class MapsActivity : AppCompatActivity() {
         val longitude = lon ?: center?.lon ?: return null
         val tags = tags.orEmpty()
 
+        val operatorStr = tags["operator"] ?: UNKNOWN_OPERATOR
         val typeStr = tags["surveillance:type"] ?: tags["camera:type"] ?: tags["highway"] ?: tags["man_made"] ?: UNKNOWN_TYPE
+        
+        // 1. Extract the National Highways Camera ID from the OSM tags
+        val ref = tags["ref"] ?: tags["asset_ref"]
+        var liveImgUrl: String? = null
+        
+        // 2. If it is a National Highways camera with a reference ID, generate the live hotlink
+        if ((operatorStr.contains("National Highways", ignoreCase = true) || 
+             operatorStr.contains("Highways England", ignoreCase = true)) && 
+             ref != null) {
+            liveImgUrl = "https://cctv.trafficengland.com/feeds/cctv/$ref.jpg"
+        }
+
         val isTraffic = tags["highway"] == "speed_camera" ||
                 tags["enforcement"] == "speed_camera" ||
                 typeStr.contains("speed", ignoreCase = true) ||
                 typeStr.contains("traffic", ignoreCase = true) ||
                 tags["surveillance:type"]?.contains("traffic", ignoreCase = true) == true ||
                 tags["camera:type"]?.contains("traffic", ignoreCase = true) == true ||
-                tags["surveillance:kind"]?.contains("traffic", ignoreCase = true) == true
+                tags["surveillance:kind"]?.contains("traffic", ignoreCase = true) == true ||
+                liveImgUrl != null // Guarantee it renders red if we have a live feed
+                
+        // 3. Inject the live URL into the tags so your Coil bottom sheet finds it
+        val mergedTags = tags.toMutableMap()
+        if (liveImgUrl != null) {
+            mergedTags["liveImageUrl"] = liveImgUrl
+        }
 
         return CameraEntity(
             id = "osm_$id",
             lat = latitude,
             lon = longitude,
             title = tags["name"] ?: DEFAULT_CAMERA_TITLE,
-            operator = tags["operator"] ?: UNKNOWN_OPERATOR,
+            operator = operatorStr,
             type = typeStr,
             source = SOURCE_OVERPASS,
-            tagsJson = CameraTags.encode(tags),
+            tagsJson = CameraTags.encode(mergedTags),
             isTrafficCamera = isTraffic,
         )
     }
@@ -718,7 +674,7 @@ class MapsActivity : AppCompatActivity() {
     private fun showCameraBottomSheet(node: CctvNode) {
         val bottomSheetDialog = BottomSheetDialog(this)
         
-        if (node.isTrafficCamera) {
+        if (node.isTrafficCamera && !node.imageUrl.isNullOrBlank()) {
             val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_camera, null)
             val tvLocation = view.findViewById<TextView>(R.id.tvCameraLocation)
             val ivFeed = view.findViewById<ImageView>(R.id.ivCameraFeed)
@@ -726,30 +682,25 @@ class MapsActivity : AppCompatActivity() {
 
             tvLocation.text = node.titleStr
 
-            if (!node.imageUrl.isNullOrBlank()) {
-                // Fix missing protocols from the API response
-                val fixedUrl = if (node.imageUrl.startsWith("//")) {
-                    "https:${node.imageUrl}"
-                } else {
-                    node.imageUrl
-                }
-
-                val request = ImageRequest.Builder(this)
-                    .data(fixedUrl)
-                    .crossfade(true)
-                    .addHeader("User-Agent", "Mozilla/5.0")
-                    .addHeader("Ocp-Apim-Subscription-Key", BuildConfig.TRAFFIC_API_KEY)
-                    .placeholder(android.R.drawable.ic_menu_report_image)
-                    .error(android.R.drawable.ic_delete)
-                    .target(ivFeed)
-                    .build()
-
-                ivFeed.context.imageLoader.enqueue(request)
-                tvLiveIndicator.visibility = View.VISIBLE
-            } else {
-                ivFeed.setImageResource(android.R.drawable.ic_menu_camera)
-                tvLiveIndicator.visibility = View.GONE
+            val url = node.imageUrl
+            val secureUrl = when {
+                url.startsWith("http://", ignoreCase = true) -> url.replace("http://", "https://", ignoreCase = true)
+                url.startsWith("//") -> "https:$url"
+                else -> url
             }
+
+            val request = ImageRequest.Builder(this)
+                .data(secureUrl)
+                .crossfade(true)
+                .addHeader("User-Agent", "Mozilla/5.0")
+                .addHeader("Ocp-Apim-Subscription-Key", BuildConfig.TRAFFIC_API_KEY)
+                .placeholder(android.R.drawable.ic_menu_report_image)
+                .error(android.R.drawable.ic_delete)
+                .target(ivFeed)
+                .build()
+
+            ivFeed.context.imageLoader.enqueue(request)
+            tvLiveIndicator.visibility = View.VISIBLE
             bottomSheetDialog.setContentView(view)
         } else {
             val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_camera_detail, null)
@@ -761,10 +712,10 @@ class MapsActivity : AppCompatActivity() {
             val tagContainer = view.findViewById<LinearLayout>(R.id.tagContainer)
             val btnVerifyImagery = view.findViewById<MaterialButton>(R.id.btnVerifyImagery)
 
-            tvSource.text = node.source
+            tvSource.text = node.source.ifBlank { "TRAFFIC SENSOR" }
             tvTitle.text = node.titleStr
-            tvOperator.text = getString(R.string.camera_operator, node.operator)
-            tvType.text = getString(R.string.camera_type, node.type)
+            tvOperator.text = getString(R.string.camera_operator, node.operator.ifBlank { "National Highways" })
+            tvType.text = getString(R.string.camera_type, node.type.ifBlank { "MIDAS Traffic Sensor" })
             tvCoordinates.text = getString(R.string.camera_coordinates, node.lat, node.lon)
 
             tagContainer.removeAllViews()
@@ -779,7 +730,7 @@ class MapsActivity : AppCompatActivity() {
                     tagContainer.addView(tagView)
                 }
             } else {
-                view.findViewById<TextView>(R.id.tvAllTags).visibility = View.GONE
+                view.findViewById<TextView>(R.id.tvAllTags)?.visibility = View.GONE
             }
 
             btnVerifyImagery.setOnClickListener {
@@ -854,15 +805,13 @@ class MapsActivity : AppCompatActivity() {
         const val UNKNOWN_TYPE = "Unknown Type"
         const val OVERPASS_BASE_URL = "https://overpass-api.de/"
         /**
-         * Reliable global Overpass instances. They are independent servers, which is why a mirror
-         * can succeed while another 500s or 504s.
+         * Reliable global Overpass instances on distinct host networks.
          */
         val OVERPASS_ENDPOINTS = listOf(
-            "https://lz4.overpass-api.de/api/interpreter",
-            "https://z.overpass-api.de/api/interpreter",
-            "https://overpass-api.de/api/interpreter",
-            "https://overpass.kumi.systems/api/interpreter",
-            "https://overpass.private.coffee/api/interpreter",
+            "https://overpass-api.de/api/interpreter",       // German main cluster
+            "https://overpass.kumi.systems/api/interpreter", // Independent mirror (Japan/Global CDN)
+            "https://overpass.private.coffee/api/interpreter", // Independent community mirror
+            "https://lz4.overpass-api.de/api/interpreter"    // Fallback cluster node
         )
 
         const val MARKER_SIZE_DP = 16
@@ -870,7 +819,7 @@ class MapsActivity : AppCompatActivity() {
         const val VIEWPORT_DEBOUNCE_MS = 1500L
 
         /** How long the primary endpoint gets before a mirror is asked in parallel. */
-        const val HEDGE_DELAY_MS = 2_500L
+        const val HEDGE_DELAY_MS = 5_000L
         const val MIN_FETCH_INTERVAL_MS = 3_000L
 
         /**

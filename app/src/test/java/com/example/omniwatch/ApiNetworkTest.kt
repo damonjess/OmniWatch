@@ -32,32 +32,4 @@ class ApiNetworkTest {
 
         assertTrue("Expected live CCTV feeds with image URLs", validFeeds.isNotEmpty())
     }
-
-    @Test
-    fun testNationalHighwaysWebtrisApi() {
-        val client = OkHttpClient.Builder()
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
-            .addInterceptor { chain ->
-                chain.proceed(
-                    chain.request().newBuilder()
-                        .header("Ocp-Apim-Subscription-Key", BuildConfig.TRAFFIC_API_KEY)
-                        .build()
-                )
-            }
-            .build()
-
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://webtris.nationalhighways.co.uk")
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        val api = retrofit.create(NationalHighwaysApi::class.java)
-
-        val response = kotlinx.coroutines.runBlocking { api.getWebtrisSites() }
-        val sites = response.sites.orEmpty()
-
-        assertTrue("Expected Webtris sites from National Highways API", sites.isNotEmpty())
-    }
 }
