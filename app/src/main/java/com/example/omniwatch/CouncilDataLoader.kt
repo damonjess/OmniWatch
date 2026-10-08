@@ -49,7 +49,7 @@ object CouncilDataLoader {
         "site_id", "fid", "objectid", "OBJECTID",
     )
     private val TITLE_KEYS = listOf(
-        "name", "Name", "title", "location", "Location", "site_name", "site", "Site",
+        "detailed_location", "detailedLocation", "name", "Name", "title", "location", "Location", "site_name", "site", "Site",
         "address", "description",
     )
     private val OPERATOR_KEYS = listOf(
