@@ -38,5 +38,105 @@
     "streamUrl": "https://player.twitch.tv/?channel=cmaloban&parent=www.cmassets.co.uk&autoplay=true",
     "streamType": "WEB",
     "websiteUrl": "https://www.cmassets.co.uk/live-webcams/"
+  },
+  {
+    "id": "public-webcam-blackpool-central-pier",
+    "latitude": 53.8118,
+    "longitude": -3.0550,
+    "name": "Blackpool Promenade and Central Pier",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/blackpool/blackpool.html",
+    "streamType": "WEB",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/blackpool/blackpool.html"
+  },
+  {
+    "id": "public-webcam-st-ives-harbour",
+    "latitude": 50.2141,
+    "longitude": -5.4808,
+    "name": "St Ives Harbour Beach",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/st-ives/st-ives.html",
+    "streamType": "WEB",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/st-ives/st-ives.html"
+  },
+  {
+    "id": "public-webcam-dover-beach-kent",
+    "latitude": 51.1279,
+    "longitude": 1.3134,
+    "name": "Dover Beach and White Cliffs",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/dover/dover-beach-kent.html",
+    "streamType": "WEB",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/dover/dover-beach-kent.html"
+  },
+  {
+    "id": "public-webcam-brighton-pier",
+    "latitude": 50.8195,
+    "longitude": -0.1367,
+    "name": "Brighton Pier and Beach",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/brighton/brighton-pier.html",
+    "streamType": "WEB",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/brighton/brighton-pier.html"
+  },
+  {
+    "id": "public-webcam-deal-beach-kent",
+    "latitude": 51.2230,
+    "longitude": 1.3985,
+    "name": "Deal Beach and Pier",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/deal/deal-kent.html",
+    "streamType": "WEB",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/deal/deal-kent.html"
+  },
+  {
+    "id": "public-webcam-barmouth-harbour",
+    "latitude": 52.7215,
+    "longitude": -4.0560,
+    "name": "Barmouth Harbour and Bridge",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/barmouth-harbour.html",
+    "streamType": "WEB",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/barmouth-harbour.html"
+  },
+  {
+    "id": "public-webcam-bala-lake",
+    "latitude": 52.9078,
+    "longitude": -3.5970,
+    "name": "Bala Lake and Sailing Club",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/bala.html",
+    "streamType": "WEB",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/bala.html"
+  },
+  {
+    "id": "public-webcam-porlock-weir",
+    "latitude": 51.2165,
+    "longitude": -3.5960,
+    "name": "Porlock Weir",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/porlock-weir/porlock-weir.html",
+    "streamType": "WEB",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/porlock-weir/porlock-weir.html"
+  },
+  {
+    "id": "public-webcam-hereford-high-town",
+    "latitude": 52.0565,
+    "longitude": -2.7160,
+    "name": "Hereford High Town",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/hereford/hereford-high-town.html",
+    "streamType": "WEB",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/hereford/hereford-high-town.html"
+  },
+  {
+    "id": "public-webcam-cardiff-st-mary-street",
+    "latitude": 51.4816,
+    "longitude": -3.1791,
+    "name": "Cardiff St Mary Street",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/cardiff/cardiff.html",
+    "streamType": "WEB",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/cardiff/cardiff.html"
   }
 ]

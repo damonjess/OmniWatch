@@ -18,6 +18,7 @@ import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.View
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.ImageView
@@ -120,6 +121,7 @@ class MapsActivity : AppCompatActivity() {
             val lon = data.getDoubleExtra(PublicWebcamsActivity.EXTRA_LON, 0.0)
             if (lat != 0.0 || lon != 0.0) {
                 mapView.controller.animateTo(GeoPoint(lat, lon), 15.0, 1000L)
+                mapView.post { refreshViewport(force = true) }
             }
         }
     }
@@ -796,15 +798,107 @@ class MapsActivity : AppCompatActivity() {
             webcamView.settings.javaScriptEnabled = true
             webcamView.settings.domStorageEnabled = true
             webcamView.settings.mediaPlaybackRequiresUserGesture = false
-            webcamView.settings.loadWithOverviewMode = true
-            webcamView.settings.useWideViewPort = true
-            webcamView.webViewClient = WebViewClient()
+            webcamView.settings.loadWithOverviewMode = false
+            webcamView.settings.useWideViewPort = false
+
+            val hideClutterJs = """
+                (function() {
+                    function cleanWebcamPage() {
+                        try {
+                            var meta = document.querySelector('meta[name="viewport"]');
+                            if (!meta) {
+                                meta = document.createElement('meta');
+                                meta.name = 'viewport';
+                                (document.head || document.documentElement).appendChild(meta);
+                            }
+                            meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+                        } catch(e) {}
+
+                        try {
+                            var btns = document.querySelectorAll('.fc-cta-consent, .fc-primary-button, .fc-button, .qc-cmp2-summary-section button, button[mode="primary"], .qc-cmp2-btn[mode="primary"], #qc-cmp2-ui button, button[class*="consent"], button[class*="accept"]');
+                            for (var i = 0; i < btns.length; i++) {
+                                btns[i].click();
+                            }
+                        } catch(e) {}
+
+                        var styleId = 'omniwatch-webcam-cleaner';
+                        if (!document.getElementById(styleId)) {
+                            var style = document.createElement('style');
+                            style.id = styleId;
+                            style.innerHTML = '.fc-consent-root, #fc-consent-root, .fc-dialog-overlay, .fc-dialog-container, div[class*="fc-"], div[id*="fc-"], ' +
+                                '#qc-cmp2-container, .qc-cmp2-container, [id*="qc-cmp"], [class*="qc-cmp"], #qc-cmp2-ui, ' +
+                                'iframe[title*="consent"], iframe[src*="consent"], iframe[src*="fundingchoices"], #onetrust-consent-sdk, .cc-window, ' +
+                                'header, footer, nav, .header, .footer, .navbar, .breadcrumb, .adsbygoogle, .cam-vert, .wa, ' +
+                                '.descr, #skw-wall, .sidebar, .comments, .skw-header, .skw-footer, .skw-nav, .skw-sidebar, ' +
+                                'div[class*="ad-"], div[id*="ad-"], .social-share, .related-cams { ' +
+                                'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; } ' +
+                                'html, body { background: #000000 !important; margin: 0 !important; padding: 0 !important; width: 100% !important; height: 100% !important; } ' +
+                                '#skylinewebcams, #webcam, #live, .embed-responsive, video, ' +
+                                'iframe[src*="youtube"], iframe[src*="twitch"], iframe[src*="player"], .player-container, .video-container { ' +
+                                'display: block !important; width: 100% !important; height: 100% !important; min-height: 280px !important; max-width: 100% !important; max-height: 100% !important; ' +
+                                'position: relative !important; top: 0 !important; left: 0 !important; margin: 0 auto !important; padding: 0 !important; border: none !important; object-fit: contain !important; z-index: 9999999 !important; }';
+                            var targetHead = document.head || document.documentElement;
+                            if (targetHead) {
+                                targetHead.appendChild(style);
+                            }
+                        }
+
+                        var v = document.querySelector('video');
+                        if (v && v.paused) {
+                            v.play().catch(function(e){});
+                        }
+                    }
+
+                    cleanWebcamPage();
+                    if (!window.__omniwatchTimer) {
+                        window.__omniwatchTimer = setInterval(cleanWebcamPage, 300);
+                    }
+                })();
+            """.trimIndent()
+
+            webcamView.webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                    return false
+                }
+
+                override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): android.webkit.WebResourceResponse? {
+                    val urlStr = request?.url?.toString() ?: ""
+                    if (urlStr.contains("fundingchoicesmessages.google.com") ||
+                        urlStr.contains("quantcast.com") ||
+                        urlStr.contains("consensu.org") ||
+                        urlStr.contains("cookie-script.com") ||
+                        urlStr.contains("onetrust.com") ||
+                        urlStr.contains("cookiebot.com") ||
+                        urlStr.contains("cmp.quantcast.com") ||
+                        urlStr.contains("fundingchoices")) {
+                        return android.webkit.WebResourceResponse("text/plain", "UTF-8", java.io.ByteArrayInputStream(ByteArray(0)))
+                    }
+                    return super.shouldInterceptRequest(view, request)
+                }
+
+                override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                    super.onPageStarted(view, url, favicon)
+                    view?.evaluateJavascript(hideClutterJs, null)
+                }
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    view?.evaluateJavascript(hideClutterJs, null)
+                }
+            }
+
+            webcamView.webChromeClient = object : android.webkit.WebChromeClient() {
+                override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                    super.onProgressChanged(view, newProgress)
+                    if (newProgress > 10) {
+                        view?.evaluateJavascript(hideClutterJs, null)
+                    }
+                }
+            }
+
             val pageUrl = node.streamUrl?.takeIf { it.isNotBlank() } ?: node.websiteUrl
             if (!pageUrl.isNullOrBlank()) {
                 val urlToLoad = toEmbeddedWebcamUrl(pageUrl)
-                // Add a WebChromeClient so full screen or inline video play is supported nicely
-                webcamView.webChromeClient = android.webkit.WebChromeClient()
-                // Provide referer so Twitch/YouTube embeds don't fail identity checks
                 val extraHeaders = mutableMapOf<String, String>()
                 extraHeaders["Referer"] = "https://www.cmassets.co.uk/"
                 webcamView.loadUrl(urlToLoad, extraHeaders)
@@ -891,12 +985,17 @@ class MapsActivity : AppCompatActivity() {
     }
 
     private fun toEmbeddedWebcamUrl(url: String): String {
-        val match = Regex("(?:youtube\\.com/watch\\?v=|youtu\\.be/)([A-Za-z0-9_-]{6,})").find(url)
-        return if (match != null) {
-            "https://www.youtube-nocookie.com/embed/${match.groupValues[1]}?autoplay=1&playsinline=1"
-        } else {
-            url
+        val youtubeMatch = Regex("(?:youtube\\.com/(?:watch\\?v=|live/|embed/)|youtu\\.be/)([A-Za-z0-9_-]{6,})").find(url)
+        if (youtubeMatch != null) {
+            val videoId = youtubeMatch.groupValues[1]
+            return "https://www.youtube-nocookie.com/embed/$videoId?autoplay=1&playsinline=1"
         }
+        val twitchMatch = Regex("(?:twitch\\.tv/|player\\.twitch\\.tv/\\?channel=)([A-Za-z0-9_]{3,})").find(url)
+        if (twitchMatch != null && !url.contains("player.twitch.tv")) {
+            val channel = twitchMatch.groupValues[1]
+            return "https://player.twitch.tv/?channel=$channel&parent=www.cmassets.co.uk&autoplay=true"
+        }
+        return url
     }
 
     private fun showLegend() {

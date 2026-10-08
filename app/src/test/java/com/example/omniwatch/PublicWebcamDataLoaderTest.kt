@@ -2,6 +2,7 @@ package com.example.omniwatch
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -34,13 +35,23 @@ class PublicWebcamDataLoaderTest {
         val type = object : TypeToken<List<WebcamRecord>>() {}.type
         val records: List<WebcamRecord> = Gson().fromJson(requireNotNull(asset).readText(), type)
 
-        assertTrue("public_webcams.json should contain records", records.isNotEmpty())
+        assertEquals("Expected 14 webcams in expanded catalogue", 14, records.size)
 
         val ids = records.map { it.id }
         assertTrue("Eernewoude HLS webcam missing", ids.contains("public-webcam-eernewoude-princenhof"))
         assertTrue("Ramsgate Harbour webcam missing", ids.contains("public-webcam-ramsgate-royal-harbour"))
         assertTrue("Lyme Regis Harbour webcam missing", ids.contains("public-webcam-lyme-regis-seafront"))
         assertTrue("CMAL Scotland Harbours webcam missing", ids.contains("public-webcam-cmal-scotland-harbours"))
+        assertTrue("Blackpool webcam missing", ids.contains("public-webcam-blackpool-central-pier"))
+        assertTrue("St Ives webcam missing", ids.contains("public-webcam-st-ives-harbour"))
+        assertTrue("Dover webcam missing", ids.contains("public-webcam-dover-beach-kent"))
+        assertTrue("Brighton webcam missing", ids.contains("public-webcam-brighton-pier"))
+        assertTrue("Deal webcam missing", ids.contains("public-webcam-deal-beach-kent"))
+        assertTrue("Barmouth webcam missing", ids.contains("public-webcam-barmouth-harbour"))
+        assertTrue("Bala Lake webcam missing", ids.contains("public-webcam-bala-lake"))
+        assertTrue("Porlock Weir webcam missing", ids.contains("public-webcam-porlock-weir"))
+        assertTrue("Hereford webcam missing", ids.contains("public-webcam-hereford-high-town"))
+        assertTrue("Cardiff webcam missing", ids.contains("public-webcam-cardiff-st-mary-street"))
 
         records.forEach { record ->
             assertTrue("Invalid latitude for ${record.id}", record.latitude in -90.0..90.0)
