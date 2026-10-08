@@ -46,7 +46,7 @@
     "name": "Blackpool Promenade and Central Pier",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/blackpool/blackpool.html",
-    "streamType": "WEB",
+    "streamType": "SKYLINE",
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/blackpool/blackpool.html"
   },
   {
@@ -56,7 +56,7 @@
     "name": "St Ives Harbour Beach",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/st-ives/st-ives.html",
-    "streamType": "WEB",
+    "streamType": "SKYLINE",
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/st-ives/st-ives.html"
   },
   {
@@ -66,7 +66,7 @@
     "name": "Dover Beach and White Cliffs",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/dover/dover-beach-kent.html",
-    "streamType": "WEB",
+    "streamType": "SKYLINE",
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/dover/dover-beach-kent.html"
   },
   {
@@ -76,7 +76,7 @@
     "name": "Brighton Pier and Beach",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/brighton/brighton-pier.html",
-    "streamType": "WEB",
+    "streamType": "SKYLINE",
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/brighton/brighton-pier.html"
   },
   {
@@ -86,7 +86,7 @@
     "name": "Deal Beach and Pier",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/deal/deal-kent.html",
-    "streamType": "WEB",
+    "streamType": "SKYLINE",
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/deal/deal-kent.html"
   },
   {
@@ -96,7 +96,7 @@
     "name": "Barmouth Harbour and Bridge",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/barmouth-harbour.html",
-    "streamType": "WEB",
+    "streamType": "SKYLINE",
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/barmouth-harbour.html"
   },
   {
@@ -106,7 +106,7 @@
     "name": "Bala Lake and Sailing Club",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/bala.html",
-    "streamType": "WEB",
+    "streamType": "SKYLINE",
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/bala.html"
   },
   {
@@ -116,7 +116,7 @@
     "name": "Porlock Weir",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/porlock-weir/porlock-weir.html",
-    "streamType": "WEB",
+    "streamType": "SKYLINE",
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/porlock-weir/porlock-weir.html"
   },
   {
@@ -126,7 +126,7 @@
     "name": "Hereford High Town",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/hereford/hereford-high-town.html",
-    "streamType": "WEB",
+    "streamType": "SKYLINE",
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/england/hereford/hereford-high-town.html"
   },
   {
@@ -136,7 +136,7 @@
     "name": "Cardiff St Mary Street",
     "operator": "SkylineWebcams",
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/cardiff/cardiff.html",
-    "streamType": "WEB",
+    "streamType": "SKYLINE",
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/cardiff/cardiff.html"
   }
 ]

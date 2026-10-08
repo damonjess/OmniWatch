@@ -19,7 +19,14 @@
 - Added a searchable Public Webcams directory opened from the map screen. Selecting a result centres the map on the webcam marker.
 - Added UK public webcam entries for Ramsgate Royal Harbour, Lyme Regis seafront/Cobb Harbour, and CMAL Scottish harbour webcams. These are labelled WEB and open the operator's official page because they do not currently expose a direct HLS URL to OmniWatch.
 - Changed WEB webcam handling so pages and permitted embedded players load inside OmniWatch in a WebView; the app no longer launches an external browser for these entries. YouTube watch links are converted to privacy-enhanced embed URLs where possible.
-- Expanded the catalogue from 4 to 14 records, including 10 UK public webcam pages: Blackpool, St Ives, Dover, Brighton, Deal, Barmouth, Bala, Porlock Weir, Hereford, and Cardiff. These use the in-app WebView and remain labelled WEB because the provider pages do not expose direct HLS URLs to OmniWatch.
+- Expanded the catalogue from 4 to 14 records, including 10 UK public webcam pages: Blackpool, St Ives, Dover, Brighton, Deal, Barmouth, Bala, Porlock Weir, Hereford, and Cardiff.
+- The ten SkylineWebcams entries are now labelled `SKYLINE` and play the operator's live feed in the in-app player instead of loading the website. Skyline publishes no stable playlist URL: the stream is a short-lived signed URL on `hd-auth.skylinewebcams.com`, so it is resolved from the camera page immediately before playback (the page's `source:'livee.m3u8?a=TOKEN'` becomes `https://hd-auth.skylinewebcams.com/live.m3u8?a=TOKEN`). The sheet shows `PUBLIC WEBCAM • LIVE HLS` and `LIVE • SkylineWebcams`.
+- Selecting an entry in the Public Webcams directory now plays its live feed straight away in addition to centring the map, so a second marker tap is no longer needed.
+- Non-Skyline WEB entries (YouTube, Twitch, Visit Dorset, CMAL) keep using the in-app WebView, because they still expose no direct HLS URL.
+- The app now remembers which Overpass mirror last answered and tries it first, instead of always starting with the top of a fixed list. This matters on networks that refuse TCP to the main `overpass-api.de` host while community mirrors still work; previously every viewport change paid for the unreachable host first. The failure reason shown in the map header is also reset per fetch so it cannot report a stale cause.
+- Webcam entries with an unusable page no longer open a browser view. OpenStreetMap's `contact:webcam` tag is free text and contains values such as `CPE510` (a Wi-Fi bridge model) and `hhttp://...` (a mistyped scheme), which made a WebView render Chromium's own error page. Only a genuine `http(s)` address is embedded now; anything else opens the camera's detail sheet so the raw tag is visible.
+- Cleartext `http://` webcam snapshot URLs are upgraded to `https://` before loading. Android blocks cleartext for apps targeting recent API levels, so an http page could never load in the WebView; the snapshot hosts in the catalogue serve https.
+- A webcam page that still fails to load now reports it in plain language instead of leaving Chromium's error page on screen, and the external-webcam sheet wraps its content instead of expanding to fill the screen with black.
 - The map legend and overlays distinguish the regional sources.
 - Legacy WebTRIS sensor records are removed when the real National Highways camera list loads.
 
@@ -41,9 +48,11 @@ The National Highways CCTV catalogue and image host are public and do not requir
 
 ## Build verification
 
-- `./gradlew test assembleDebug`
-- Result: successful
+- `./gradlew testDebugUnitTest assembleDebug`
+- Result: successful (30 unit tests)
 - Debug APK: `app/build/outputs/apk/debug/app-debug.apk`
+- Verified on a physical device over adb: Blackpool (SkylineWebcams) opens `PUBLIC WEBCAM • LIVE HLS`, plays the live promenade feed, and reports `LIVE • SkylineWebcams` with no player or runtime errors in logcat.
+- `PublicWebcamStreamsTest` covers the playlist extraction off-device; the signed URL itself is only valid for one visit, so end-to-end playback is checked on a device rather than in a unit test.
 
 ## Live-feed verification
 

@@ -31,6 +31,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import coil.imageLoader
@@ -99,6 +102,12 @@ class MapsActivity : AppCompatActivity() {
     private var lastFetchedBbox: ViewportBounds? = null
     private var lastFetchAt = 0L
 
+    /**
+     * Mirror that last answered, tried first on the next viewport. Neutral networks mostly reach
+     * the first endpoint anyway; where one host is blocked the app stops starting there.
+     */
+    private var preferredOverpassEndpoint: String? = null
+
     private val refreshHandler = Handler(Looper.getMainLooper())
     private val refreshRunnable = Runnable { refreshViewport() }
 
@@ -123,6 +132,7 @@ class MapsActivity : AppCompatActivity() {
                 mapView.controller.animateTo(GeoPoint(lat, lon), 15.0, 1000L)
                 mapView.post { refreshViewport(force = true) }
             }
+            openSelectedWebcam(data.getStringExtra(PublicWebcamsActivity.EXTRA_ID))
         }
     }
 
@@ -390,6 +400,8 @@ class MapsActivity : AppCompatActivity() {
             ensurePublicWebcamData()
             renderViewport(bounds)
 
+            // Cleared first so the header never shows a reason left over from an earlier viewport.
+            lastFailure = null
             val live = fetchOverpassCameras(bounds)
             if (live != null) {
                 failedAttempts = 0
@@ -458,19 +470,22 @@ class MapsActivity : AppCompatActivity() {
             val query = OverpassQuery.build(bounds)
             Log.d(TAG, "Overpass query: $query")
 
-            val channel = Channel<List<CameraEntity>?>(Channel.UNLIMITED)
+            // Each reply carries the mirror that produced it, so the next viewport can start with
+            // the endpoint that is actually reachable on this network.
+            val channel = Channel<Pair<String, List<CameraEntity>?>>(Channel.UNLIMITED)
             val jobs = mutableListOf<Job>()
+            val endpoints = OverpassEndpoints.ordered(preferredOverpassEndpoint)
 
             var index = 0
             var activeJobs = 0
 
             fun launchNext() {
-                if (index >= OVERPASS_ENDPOINTS.size) return
-                val endpoint = OVERPASS_ENDPOINTS[index++]
+                if (index >= endpoints.size) return
+                val endpoint = endpoints[index++]
                 activeJobs++
                 jobs += launch(Dispatchers.IO) {
                     val result = requestCameras(endpoint, query)
-                    channel.send(result)
+                    channel.send(endpoint to result)
                 }
             }
 
@@ -478,7 +493,7 @@ class MapsActivity : AppCompatActivity() {
 
             var found: List<CameraEntity>? = null
             while (activeJobs > 0 && found == null) {
-                val response = select<List<CameraEntity>?> {
+                val response = select<Pair<String, List<CameraEntity>?>?> {
                     channel.onReceive { it }
                     onTimeout(HEDGE_DELAY_MS) {
                         launchNext()
@@ -486,8 +501,10 @@ class MapsActivity : AppCompatActivity() {
                     }
                 }
 
-                if (response != null) {
-                    found = response
+                val cameras = response?.second
+                if (cameras != null) {
+                    found = cameras
+                    preferredOverpassEndpoint = response.first
                 } else {
                     activeJobs--
                     if (activeJobs == 0) {
@@ -502,9 +519,17 @@ class MapsActivity : AppCompatActivity() {
 
     private suspend fun requestCameras(endpoint: String, query: String): List<CameraEntity>? {
         return try {
+            // POST is the documented method, but mirrors differ: some answer POST and fail GET,
+            // others the reverse. Cancellation is rethrown rather than swallowed, so a cancelled
+            // viewport fetch cannot keep the coroutine working through the GET fallback.
             val response = withContext(Dispatchers.IO) {
-                runCatching { overpassApi.getCctvCamerasPost(endpoint, query) }
-                    .getOrElse { overpassApi.getCctvCamerasGet(endpoint, query) }
+                try {
+                    overpassApi.getCctvCamerasPost(endpoint, query)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    overpassApi.getCctvCamerasGet(endpoint, query)
+                }
             }
 
             if (response.remark != null) {
@@ -767,31 +792,13 @@ class MapsActivity : AppCompatActivity() {
     private fun showCameraBottomSheet(node: CctvNode) {
         val bottomSheetDialog = BottomSheetDialog(this)
 
-        if (node.isWebcam && node.streamType.equals("HLS", ignoreCase = true) && !node.streamUrl.isNullOrBlank()) {
-            val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_webcam, null)
-            val tvLocation = view.findViewById<TextView>(R.id.tvWebcamLocation)
-            val playerView = view.findViewById<PlayerView>(R.id.webcamPlayerView)
-            val tvStatus = view.findViewById<TextView>(R.id.tvWebcamStatus)
-            tvLocation.text = node.titleStr
-
-            activeWebcamPlayer?.release()
-            val player = ExoPlayer.Builder(this).build()
-            activeWebcamPlayer = player
-            playerView.player = player
-            player.setMediaItem(MediaItem.fromUri(node.streamUrl))
-            player.prepare()
-            player.playWhenReady = true
-            tvStatus.text = "LIVE HLS STREAM • ${node.operator}"
-
-            bottomSheetDialog.setOnDismissListener {
-                if (activeWebcamPlayer === player) {
-                    player.release()
-                    activeWebcamPlayer = null
-                }
-            }
-            bottomSheetDialog.setContentView(view)
-        } else if (node.isWebcam) {
+        if (node.isWebcam && canPlayWebcamLive(node)) {
+            // Direct playlists and SkylineWebcams pages both play in the in-app ExoPlayer, so the
+            // operator's page, adverts and consent banners never take over the sheet.
+            showLiveWebcamSheet(bottomSheetDialog, node)
+        } else if (node.isWebcam && hasEmbeddableWebcamPage(node)) {
             val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_webcam_external, null)
+            val tvStatus = view.findViewById<TextView>(R.id.tvExternalWebcamStatus)
             view.findViewById<TextView>(R.id.tvExternalWebcamSource).text = "PUBLIC WEBCAM • ${node.streamType ?: "WEB"}"
             view.findViewById<TextView>(R.id.tvExternalWebcamTitle).text = node.titleStr
             val webcamView = view.findViewById<WebView>(R.id.webcamWebView)
@@ -861,6 +868,19 @@ class MapsActivity : AppCompatActivity() {
                     return false
                 }
 
+                override fun onReceivedError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    error: android.webkit.WebResourceError?,
+                ) {
+                    super.onReceivedError(view, request, error)
+                    // Only a failed main page is worth reporting; embedded ads and images fail
+                    // constantly and do not mean the camera is unavailable.
+                    if (request?.isForMainFrame != true) return
+                    tvStatus.text = getString(R.string.webcam_page_unavailable)
+                    tvStatus.visibility = View.VISIBLE
+                }
+
                 override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): android.webkit.WebResourceResponse? {
                     val urlStr = request?.url?.toString() ?: ""
                     if (urlStr.contains("fundingchoicesmessages.google.com") ||
@@ -878,6 +898,7 @@ class MapsActivity : AppCompatActivity() {
 
                 override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                     super.onPageStarted(view, url, favicon)
+                    tvStatus.visibility = View.GONE
                     view?.evaluateJavascript(hideClutterJs, null)
                 }
 
@@ -896,12 +917,13 @@ class MapsActivity : AppCompatActivity() {
                 }
             }
 
-            val pageUrl = node.streamUrl?.takeIf { it.isNotBlank() } ?: node.websiteUrl
-            if (!pageUrl.isNullOrBlank()) {
-                val urlToLoad = toEmbeddedWebcamUrl(pageUrl)
-                val extraHeaders = mutableMapOf<String, String>()
-                extraHeaders["Referer"] = "https://www.cmassets.co.uk/"
-                webcamView.loadUrl(urlToLoad, extraHeaders)
+            // Only a real web address reaches the WebView. An OpenStreetMap tag such as `CPE510`
+            // or a cleartext snapshot URL would otherwise render Chromium's own error page, which
+            // reads as the camera being broken rather than the link being unusable.
+            val pageUrl = WebcamPages.embeddableUrl(node.streamUrl ?: node.websiteUrl)
+            if (pageUrl != null) {
+                val extraHeaders = mutableMapOf("Referer" to "https://www.cmassets.co.uk/")
+                webcamView.loadUrl(toEmbeddedWebcamUrl(pageUrl), extraHeaders)
             }
             bottomSheetDialog.setOnDismissListener {
                 webcamView.stopLoading()
@@ -984,6 +1006,108 @@ class MapsActivity : AppCompatActivity() {
         bottomSheetDialog.show()
     }
 
+    /**
+     * True when the entry points at a page a WebView can actually load. Photos tagged only with
+     * something like `contact:webcam=CPE510` have no page, so they open the detail sheet instead
+     * of a browser view that could only ever show an error.
+     */
+    private fun hasEmbeddableWebcamPage(node: CctvNode): Boolean =
+        WebcamPages.embeddableUrl(node.streamUrl ?: node.websiteUrl) != null
+
+    /** Webcams that play without a browser: a direct HLS playlist or a resolvable operator page. */
+    private fun canPlayWebcamLive(node: CctvNode): Boolean {
+        val streamUrl = node.streamUrl ?: return false
+        if (streamUrl.isBlank()) return false
+        return node.streamType.equals(WEBCAM_STREAM_HLS, ignoreCase = true) ||
+            PublicWebcamStreams.isSkylinePage(streamUrl)
+    }
+
+    /**
+     * Plays a webcam in the ExoPlayer sheet. Providers that hide their playlist behind a page
+     * (SkylineWebcams) have it resolved first, so the sheet opens straight away in a connecting
+     * state and the player is attached once the playlist URL is known.
+     */
+    private fun showLiveWebcamSheet(bottomSheetDialog: BottomSheetDialog, node: CctvNode) {
+        val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_webcam, null)
+        val tvLocation = view.findViewById<TextView>(R.id.tvWebcamLocation)
+        val tvSource = view.findViewById<TextView>(R.id.tvWebcamSource)
+        val playerView = view.findViewById<PlayerView>(R.id.webcamPlayerView)
+        val tvStatus = view.findViewById<TextView>(R.id.tvWebcamStatus)
+
+        tvLocation.text = node.titleStr
+        tvSource.text = getString(R.string.webcam_source_live)
+        tvStatus.text = getString(R.string.webcam_connecting)
+
+        activeWebcamPlayer?.release()
+        activeWebcamPlayer = null
+
+        var player: ExoPlayer? = null
+        var dismissed = false
+        bottomSheetDialog.setOnDismissListener {
+            dismissed = true
+            player?.release()
+            if (activeWebcamPlayer === player) activeWebcamPlayer = null
+        }
+        bottomSheetDialog.setContentView(view)
+        bottomSheetDialog.show()
+
+        val directUrl = node.streamUrl
+            ?.takeIf { node.streamType.equals(WEBCAM_STREAM_HLS, ignoreCase = true) }
+        lifecycleScope.launch {
+            val playUrl = directUrl
+                ?: node.streamUrl?.let { PublicWebcamStreams.resolveLiveHlsUrl(it) }
+            if (playUrl.isNullOrBlank()) {
+                tvStatus.text = getString(R.string.webcam_stream_unavailable)
+                return@launch
+            }
+            // The sheet may be closed while the playlist is still resolving; attaching a player to
+            // a dismissed sheet would leak it because the dismiss listener has already run.
+            if (dismissed || isFinishing || isDestroyed) return@launch
+
+            val newPlayer = ExoPlayer.Builder(this@MapsActivity).build()
+            player = newPlayer
+            activeWebcamPlayer = newPlayer
+            playerView.player = newPlayer
+            newPlayer.addListener(object : Player.Listener {
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (playbackState == Player.STATE_READY) {
+                        tvStatus.text = getString(
+                            R.string.webcam_live,
+                            node.operator.ifBlank { node.titleStr },
+                        )
+                    }
+                }
+
+                override fun onPlayerError(error: PlaybackException) {
+                    Log.w(TAG, "Live webcam playback failed for ${node.titleStr}", error)
+                    tvStatus.text = getString(R.string.webcam_playback_failed)
+                }
+            })
+            // Some cameras only expose the .m3u8 in the token query, so the HLS type is stated
+            // explicitly rather than inferred from the URI.
+            newPlayer.setMediaItem(
+                MediaItem.Builder()
+                    .setUri(playUrl)
+                    .setMimeType(MimeTypes.APPLICATION_M3U8)
+                    .build()
+            )
+            newPlayer.prepare()
+            newPlayer.playWhenReady = true
+        }
+    }
+
+    /** Selecting a directory entry opens its feed straight away instead of a second marker tap. */
+    private fun openSelectedWebcam(webcamId: String?) {
+        if (webcamId.isNullOrBlank()) return
+        lifecycleScope.launch {
+            val entity = withContext(Dispatchers.IO) {
+                PublicWebcamDataLoader.loadFromAssets(this@MapsActivity)
+                    .firstOrNull { webcam -> webcam.id == webcamId }
+            } ?: return@launch
+            showCameraBottomSheet(entity.toNode())
+        }
+    }
+
     private fun toEmbeddedWebcamUrl(url: String): String {
         val youtubeMatch = Regex("(?:youtube\\.com/(?:watch\\?v=|live/|embed/)|youtu\\.be/)([A-Za-z0-9_-]{6,})").find(url)
         if (youtubeMatch != null) {
@@ -1062,6 +1186,7 @@ class MapsActivity : AppCompatActivity() {
 
     private companion object {
         const val TAG = "MapsActivity"
+        const val WEBCAM_STREAM_HLS = "HLS"
         const val SOURCE_OVERPASS = "OVERPASS"
         const val SOURCE_TRAFFIC = "TRAFFIC"
         const val SOURCE_NATIONAL_HIGHWAYS = "National Highways"
@@ -1072,12 +1197,6 @@ class MapsActivity : AppCompatActivity() {
         const val UNKNOWN_OPERATOR = "Unknown Operator"
         const val UNKNOWN_TYPE = "Unknown Type"
         const val OVERPASS_BASE_URL = "https://overpass-api.de/"
-        val OVERPASS_ENDPOINTS = listOf(
-            "https://overpass-api.de/api/interpreter",
-            "https://overpass.kumi.systems/api/interpreter",
-            "https://overpass.private.coffee/api/interpreter",
-            "https://lz4.overpass-api.de/api/interpreter"
-        )
 
         const val MARKER_SIZE_DP = 16
         const val MARKER_STROKE_DP = 2

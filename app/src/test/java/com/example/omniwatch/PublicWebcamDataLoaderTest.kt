@@ -53,6 +53,17 @@ class PublicWebcamDataLoaderTest {
         assertTrue("Hereford webcam missing", ids.contains("public-webcam-hereford-high-town"))
         assertTrue("Cardiff webcam missing", ids.contains("public-webcam-cardiff-st-mary-street"))
 
+        // SkylineWebcams hides its playlist behind a page, so these entries must stay marked
+        // SKYLINE with the operator page as the stream URL for the resolver to find a feed.
+        val skyline = records.filter { it.streamType.equals("SKYLINE", ignoreCase = true) }
+        assertEquals("Expected 10 SkylineWebcams entries marked SKYLINE", 10, skyline.size)
+        skyline.forEach { record ->
+            assertTrue(
+                "Skyline entry ${record.id} must point at a resolvable operator page",
+                record.streamUrl.contains("skylinewebcams.com", ignoreCase = true)
+            )
+        }
+
         records.forEach { record ->
             assertTrue("Invalid latitude for ${record.id}", record.latitude in -90.0..90.0)
             assertTrue("Invalid longitude for ${record.id}", record.longitude in -180.0..180.0)
