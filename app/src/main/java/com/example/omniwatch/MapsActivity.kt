@@ -954,7 +954,7 @@ class MapsActivity : AppCompatActivity() {
         val WALES_COLOR: Int = "#00897B".toColorInt()
         /** Green for Northern Ireland cameras. */
         val NI_COLOR: Int = "#388E3C".toColorInt()
-        /** Cyan for Essex Highways cameras, clearly distinct from London/TfL red. */
-        val ESSEX_COLOR: Int = "#00ACC1".toColorInt()
+        /** Magenta for Essex Highways cameras. */
+        val ESSEX_COLOR: Int = "#C2185B".toColorInt()
     }
 }
