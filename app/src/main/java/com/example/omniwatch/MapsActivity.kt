@@ -48,6 +48,7 @@ import com.example.omniwatch.data.db.CameraEntity
 import com.example.omniwatch.data.db.CameraTags
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -106,6 +107,7 @@ class MapsActivity : AppCompatActivity() {
     private var webcamLoaded = false
     private var trafficVisionLoaded = false
     private var activeWebcamPlayer: ExoPlayer? = null
+    private val selectedCameraFilters = linkedSetOf<String>()
 
     /** The station's last known position, the marker that follows it, and the job that polls it. */
     private var issPosition: IssPosition? = null
@@ -203,6 +205,7 @@ class MapsActivity : AppCompatActivity() {
         trafficVisionOverlay = FolderOverlay()
         webcamOverlay = FolderOverlay()
         issOverlay = FolderOverlay()
+        selectedCameraFilters.addAll(loadCameraFilters())
         mapView.overlays.add(fovOverlay)
         mapView.overlays.add(osmOverlay)
         mapView.overlays.add(councilOverlay)
@@ -214,6 +217,7 @@ class MapsActivity : AppCompatActivity() {
         mapView.overlays.add(trafficVisionOverlay)
         mapView.overlays.add(webcamOverlay)
         mapView.overlays.add(issOverlay)
+        applyCameraFilters()
 
         // Panning or zooming re-queries only the area that came into view. The delay folds a
         // continuous drag into one request instead of one request per frame.
@@ -236,6 +240,9 @@ class MapsActivity : AppCompatActivity() {
 
         val btnIss = findViewById<MaterialButton>(R.id.btnIss)
         btnIss?.setOnClickListener { centreOnIssAndOpenSheet() }
+
+        val btnCameraFilters = findViewById<MaterialButton>(R.id.btnCameraFilters)
+        btnCameraFilters?.setOnClickListener { showCameraFiltersDialog() }
 
         // The bounding box is only meaningful once the view has been laid out.
         mapView.post { refreshViewport(force = true) }
@@ -691,7 +698,7 @@ class MapsActivity : AppCompatActivity() {
             val node = entity.toNode()
             val geoPoint = GeoPoint(node.lat, node.lon)
 
-            parseDirection(node.tags)?.let { azimuth ->
+            if (isCameraFilterSelected(node)) parseDirection(node.tags)?.let { azimuth ->
                 val fovPolygon = drawFovCone(geoPoint, azimuth)
                 fovOverlay.add(fovPolygon)
             }
@@ -701,9 +708,112 @@ class MapsActivity : AppCompatActivity() {
 
         renderCamerasToMap(nodes)
 
-        renderedCount = entities.size
+        renderedCount = nodes.count(::isCameraFilterSelected)
         updateCountView()
+        applyCameraFilters()
     }
+
+    private fun showCameraFiltersDialog() {
+        val options = cameraFilterOptions()
+        val draftSelection = selectedCameraFilters.toMutableSet()
+        val checked = options.map {
+            if (it.key == FILTER_ALL) draftSelection.containsAll(CAMERA_FILTER_KEYS)
+            else it.key in draftSelection
+        }.toBooleanArray()
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.camera_filter_title)
+            .setMultiChoiceItems(options.map { it.label }.toTypedArray(), checked) { _, which, isChecked ->
+                val key = options[which].key
+                if (key == FILTER_ALL) {
+                    if (isChecked) draftSelection.addAll(CAMERA_FILTER_KEYS)
+                    else draftSelection.clear()
+                } else if (isChecked) {
+                    draftSelection.add(key)
+                } else {
+                    draftSelection.remove(key)
+                }
+            }
+            .setNegativeButton(R.string.camera_filter_cancel, null)
+            .setPositiveButton(R.string.camera_filter_apply) { _, _ ->
+                selectedCameraFilters.clear()
+                selectedCameraFilters.addAll(draftSelection)
+                saveCameraFilters()
+                applyCameraFilters()
+                renderCurrentViewport()
+            }
+            .setNeutralButton(R.string.camera_filter_clear_all) { _, _ ->
+                selectedCameraFilters.clear()
+                saveCameraFilters()
+                applyCameraFilters()
+                renderCurrentViewport()
+            }
+            .show()
+    }
+
+    private fun renderCurrentViewport() {
+        if (!::mapView.isInitialized) return
+        lifecycleScope.launch {
+            val bounds = mapView.boundingBox.toViewportBounds() ?: return@launch
+            renderViewport(bounds)
+        }
+    }
+
+    private fun applyCameraFilters() {
+        if (!::osmOverlay.isInitialized) return
+        osmOverlay.isEnabled = FILTER_OSM in selectedCameraFilters
+        councilOverlay.isEnabled = FILTER_COUNCIL in selectedCameraFilters
+        trafficOverlay.isEnabled = FILTER_LONDON in selectedCameraFilters
+        highwayOverlay.isEnabled = FILTER_HIGHWAYS in selectedCameraFilters
+        walesOverlay.isEnabled = FILTER_WALES in selectedCameraFilters
+        niOverlay.isEnabled = FILTER_NI in selectedCameraFilters
+        essexOverlay.isEnabled = FILTER_ESSEX in selectedCameraFilters
+        trafficVisionOverlay.isEnabled = FILTER_TRAFFICVISION in selectedCameraFilters
+        webcamOverlay.isEnabled = FILTER_WEBCAMS in selectedCameraFilters
+        issOverlay.isEnabled = FILTER_ISS in selectedCameraFilters
+        fovOverlay.isEnabled = selectedCameraFilters.isNotEmpty()
+        mapView.invalidate()
+    }
+
+    private fun isCameraFilterSelected(node: CctvNode): Boolean = when {
+        node.isWebcam -> FILTER_WEBCAMS in selectedCameraFilters
+        node.source == SOURCE_NATIONAL_HIGHWAYS -> FILTER_HIGHWAYS in selectedCameraFilters
+        node.source == SOURCE_TRAFFIC_WALES -> FILTER_WALES in selectedCameraFilters
+        node.source == SOURCE_TRAFFICWATCH_NI -> FILTER_NI in selectedCameraFilters
+        node.source == SOURCE_ESSEX_HIGHWAYS -> FILTER_ESSEX in selectedCameraFilters
+        node.source == SOURCE_TRAFFICVISION -> FILTER_TRAFFICVISION in selectedCameraFilters
+        node.source == SOURCE_TRAFFIC -> FILTER_LONDON in selectedCameraFilters
+        node.isCouncil -> FILTER_COUNCIL in selectedCameraFilters
+        else -> FILTER_OSM in selectedCameraFilters
+    }
+
+    private fun loadCameraFilters(): Set<String> {
+        val stored = getSharedPreferences(FILTER_PREFS, MODE_PRIVATE)
+            .getStringSet(FILTER_SELECTION, null)
+        return stored?.intersect(CAMERA_FILTER_KEYS) ?: CAMERA_FILTER_KEYS
+    }
+
+    private fun saveCameraFilters() {
+        getSharedPreferences(FILTER_PREFS, MODE_PRIVATE)
+            .edit()
+            .putStringSet(FILTER_SELECTION, selectedCameraFilters.toSet())
+            .apply()
+    }
+
+    private data class CameraFilterOption(val key: String, val label: String)
+
+    private fun cameraFilterOptions(): List<CameraFilterOption> = listOf(
+        CameraFilterOption(FILTER_ALL, getString(R.string.camera_filter_all)),
+        CameraFilterOption(FILTER_OSM, getString(R.string.camera_filter_osm)),
+        CameraFilterOption(FILTER_COUNCIL, getString(R.string.camera_filter_council)),
+        CameraFilterOption(FILTER_LONDON, getString(R.string.camera_filter_london)),
+        CameraFilterOption(FILTER_HIGHWAYS, getString(R.string.camera_filter_highways)),
+        CameraFilterOption(FILTER_WALES, getString(R.string.camera_filter_wales)),
+        CameraFilterOption(FILTER_NI, getString(R.string.camera_filter_ni)),
+        CameraFilterOption(FILTER_ESSEX, getString(R.string.camera_filter_essex)),
+        CameraFilterOption(FILTER_TRAFFICVISION, getString(R.string.camera_filter_trafficvision)),
+        CameraFilterOption(FILTER_WEBCAMS, getString(R.string.camera_filter_webcams)),
+        CameraFilterOption(FILTER_ISS, getString(R.string.camera_filter_iss)),
+    )
 
     private fun renderCamerasToMap(nodes: List<CctvNode>) {
         nodes.forEach { node ->
@@ -1434,6 +1544,7 @@ class MapsActivity : AppCompatActivity() {
      * that do not carry the site Referer (HTTP 403), so those headers are attached for its cameras
      * only; public webcams keep the player's default request headers.
      */
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     private fun mediaSourceFactory(node: CctvNode): MediaSource.Factory {
         if (node.source != SOURCE_TRAFFICVISION) return DefaultMediaSourceFactory(this)
         val httpFactory = DefaultHttpDataSource.Factory().setDefaultRequestProperties(
@@ -1564,6 +1675,31 @@ class MapsActivity : AppCompatActivity() {
         const val SOURCE_ESSEX_HIGHWAYS = "Essex Highways"
         const val SOURCE_TRAFFICVISION = "TrafficVision"
         const val SOURCE_ISS = "ISS"
+        const val FILTER_PREFS = "camera_filter_preferences"
+        const val FILTER_SELECTION = "selected_sources"
+        const val FILTER_ALL = "ALL"
+        const val FILTER_OSM = "OSM"
+        const val FILTER_COUNCIL = "COUNCIL"
+        const val FILTER_LONDON = "LONDON"
+        const val FILTER_HIGHWAYS = "HIGHWAYS"
+        const val FILTER_WALES = "WALES"
+        const val FILTER_NI = "NI"
+        const val FILTER_ESSEX = "ESSEX"
+        const val FILTER_TRAFFICVISION = "TRAFFICVISION"
+        const val FILTER_WEBCAMS = "WEBCAMS"
+        const val FILTER_ISS = "ISS"
+        val CAMERA_FILTER_KEYS = linkedSetOf(
+            FILTER_OSM,
+            FILTER_COUNCIL,
+            FILTER_LONDON,
+            FILTER_HIGHWAYS,
+            FILTER_WALES,
+            FILTER_NI,
+            FILTER_ESSEX,
+            FILTER_TRAFFICVISION,
+            FILTER_WEBCAMS,
+            FILTER_ISS,
+        )
         const val DEFAULT_CAMERA_TITLE = "CCTV Camera"
         const val UNKNOWN_OPERATOR = "Unknown Operator"
         const val UNKNOWN_TYPE = "Unknown Type"

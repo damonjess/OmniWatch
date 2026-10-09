@@ -26,50 +26,79 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="14dp"
+            android:paddingHorizontal="12dp"
             android:paddingVertical="10dp">
+
+            <TextView
+                android:id="@+id/tvCameraCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#F8FAFC"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="141 cameras in view" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tvCameraCount"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textColor="#F8FAFC"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    tools:text="141 cameras in view" />
-
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnPublicWebcams"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="6dp"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:minWidth="0dp"
+                    android:minHeight="32dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
                     android:text="@string/public_webcams"
                     android:textColor="#FFFFFF"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     app:backgroundTint="#0891B2"
-                    app:cornerRadius="8dp" />
+                    app:cornerRadius="6dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnIss"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="6dp"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:minWidth="0dp"
+                    android:minHeight="32dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
                     android:text="@string/iss_button"
                     android:textColor="#FFFFFF"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     app:backgroundTint="#E040FB"
-                    app:cornerRadius="8dp" />
+                    app:cornerRadius="6dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCameraFilters"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:minWidth="0dp"
+                    android:minHeight="32dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="@string/camera_filters"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    app:backgroundTint="#475569"
+                    app:cornerRadius="6dp" />
 
             </LinearLayout>
 
@@ -79,7 +108,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:textColor="#CBD5E1"
-                android:textSize="12sp"
+                android:textSize="11sp"
+                android:lineSpacingExtra="2dp"
                 tools:text="● OpenStreetMap   ● Council" />
 
         </LinearLayout>
