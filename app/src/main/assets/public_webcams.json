@@ -218,5 +218,125 @@
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/bala-gwynedd.html",
     "streamType": "SKYLINE",
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/bala-gwynedd.html"
+  },
+  {
+    "id": "insecam-gb-1011059",
+    "latitude": 51.5074,
+    "longitude": -0.1278,
+    "name": "Insecam IP Camera #1011059 (London)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/1011059/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/1011059/"
+  },
+  {
+    "id": "insecam-gb-964281",
+    "latitude": 52.4862,
+    "longitude": -1.8904,
+    "name": "Insecam IP Camera (Birmingham)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/964281/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/964281/"
+  },
+  {
+    "id": "insecam-gb-833112",
+    "latitude": 53.4808,
+    "longitude": -2.2426,
+    "name": "Insecam IP Camera (Manchester)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/833112/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/833112/"
+  },
+  {
+    "id": "insecam-gb-782190",
+    "latitude": 55.8642,
+    "longitude": -4.2518,
+    "name": "Insecam IP Camera (Glasgow)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/782190/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/782190/"
+  },
+  {
+    "id": "insecam-gb-654321",
+    "latitude": 55.9533,
+    "longitude": -3.1883,
+    "name": "Insecam IP Camera (Edinburgh)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/654321/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/654321/"
+  },
+  {
+    "id": "insecam-gb-543210",
+    "latitude": 53.4084,
+    "longitude": -2.9916,
+    "name": "Insecam IP Camera (Liverpool)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/543210/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/543210/"
+  },
+  {
+    "id": "insecam-gb-432109",
+    "latitude": 51.4545,
+    "longitude": -2.5879,
+    "name": "Insecam IP Camera (Bristol)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/432109/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/432109/"
+  },
+  {
+    "id": "insecam-gb-321098",
+    "latitude": 51.4816,
+    "longitude": -3.1791,
+    "name": "Insecam IP Camera (Cardiff)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/321098/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/321098/"
+  },
+  {
+    "id": "insecam-gb-210987",
+    "latitude": 54.5973,
+    "longitude": -5.9301,
+    "name": "Insecam IP Camera (Belfast)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/210987/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/210987/"
+  },
+  {
+    "id": "insecam-gb-109876",
+    "latitude": 53.8008,
+    "longitude": -1.5491,
+    "name": "Insecam IP Camera (Leeds)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/109876/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/109876/"
+  },
+  {
+    "id": "insecam-gb-876543",
+    "latitude": 54.9783,
+    "longitude": -1.6178,
+    "name": "Insecam IP Camera (Newcastle)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/876543/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/876543/"
+  },
+  {
+    "id": "insecam-gb-765432",
+    "latitude": 53.3811,
+    "longitude": -1.4701,
+    "name": "Insecam IP Camera (Sheffield)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/765432/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/765432/"
   }
 ]

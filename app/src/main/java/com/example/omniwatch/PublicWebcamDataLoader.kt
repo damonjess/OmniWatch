@@ -9,6 +9,7 @@ import com.google.gson.reflect.TypeToken
 /** Loads explicitly curated public webcam records shipped with the app. */
 object PublicWebcamDataLoader {
     const val SOURCE_PUBLIC_WEBCAM = "PUBLIC_WEBCAM"
+    const val SOURCE_INSECAM = "INSECAM"
     private const val DEFAULT_ASSET = "public_webcams.json"
 
     private data class WebcamRecord(
@@ -30,6 +31,11 @@ object PublicWebcamDataLoader {
         records.mapNotNull { record ->
             if (record.id.isBlank() || record.name.isBlank() || record.streamUrl.isBlank()) return@mapNotNull null
             if (record.latitude !in -90.0..90.0 || record.longitude !in -180.0..180.0) return@mapNotNull null
+            val sourceName = if (record.streamType.equals("INSECAM", ignoreCase = true) || record.operator.equals("Insecam", ignoreCase = true)) {
+                SOURCE_INSECAM
+            } else {
+                SOURCE_PUBLIC_WEBCAM
+            }
             CameraEntity(
                 id = record.id,
                 lat = record.latitude,
@@ -37,7 +43,7 @@ object PublicWebcamDataLoader {
                 title = record.name,
                 operator = record.operator,
                 type = "Public Webcam",
-                source = SOURCE_PUBLIC_WEBCAM,
+                source = sourceName,
                 tagsJson = CameraTags.encode(
                     mapOf(
                         "streamUrl" to record.streamUrl,

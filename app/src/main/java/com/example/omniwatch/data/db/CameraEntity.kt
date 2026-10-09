@@ -39,6 +39,7 @@ data class CameraEntity(
                 tagsMap["surveillance:type"]?.contains("traffic", ignoreCase = true) == true
 
         val isWebcam = source == "PUBLIC_WEBCAM" ||
+                source == "INSECAM" ||
                 tagsMap["man_made"] == "webcam" ||
                 tagsMap["contact:webcam"] != null ||
                 !tagsMap["playerUrl"].isNullOrBlank()

@@ -97,6 +97,7 @@ class MapsActivity : AppCompatActivity() {
     private lateinit var essexOverlay: FolderOverlay
     private lateinit var trafficVisionOverlay: FolderOverlay
     private lateinit var webcamOverlay: FolderOverlay
+    private lateinit var insecamOverlay: FolderOverlay
     private lateinit var issOverlay: FolderOverlay
     private lateinit var cameraCountView: TextView
     private lateinit var legendView: TextView
@@ -204,6 +205,7 @@ class MapsActivity : AppCompatActivity() {
         essexOverlay = FolderOverlay()
         trafficVisionOverlay = FolderOverlay()
         webcamOverlay = FolderOverlay()
+        insecamOverlay = FolderOverlay()
         issOverlay = FolderOverlay()
         selectedCameraFilters.addAll(loadCameraFilters())
         mapView.overlays.add(fovOverlay)
@@ -216,6 +218,7 @@ class MapsActivity : AppCompatActivity() {
         mapView.overlays.add(essexOverlay)
         mapView.overlays.add(trafficVisionOverlay)
         mapView.overlays.add(webcamOverlay)
+        mapView.overlays.add(insecamOverlay)
         mapView.overlays.add(issOverlay)
         applyCameraFilters()
 
@@ -693,6 +696,7 @@ class MapsActivity : AppCompatActivity() {
         essexOverlay.items.clear()
         trafficVisionOverlay.items.clear()
         webcamOverlay.items.clear()
+        insecamOverlay.items.clear()
 
         val nodes = entities.map { entity ->
             val node = entity.toNode()
@@ -769,12 +773,14 @@ class MapsActivity : AppCompatActivity() {
         essexOverlay.isEnabled = FILTER_ESSEX in selectedCameraFilters
         trafficVisionOverlay.isEnabled = FILTER_TRAFFICVISION in selectedCameraFilters
         webcamOverlay.isEnabled = FILTER_WEBCAMS in selectedCameraFilters
+        insecamOverlay.isEnabled = FILTER_INSECAM in selectedCameraFilters
         issOverlay.isEnabled = FILTER_ISS in selectedCameraFilters
         fovOverlay.isEnabled = selectedCameraFilters.isNotEmpty()
         mapView.invalidate()
     }
 
     private fun isCameraFilterSelected(node: CctvNode): Boolean = when {
+        node.source == SOURCE_INSECAM -> FILTER_INSECAM in selectedCameraFilters
         node.isWebcam -> FILTER_WEBCAMS in selectedCameraFilters
         node.source == SOURCE_NATIONAL_HIGHWAYS -> FILTER_HIGHWAYS in selectedCameraFilters
         node.source == SOURCE_TRAFFIC_WALES -> FILTER_WALES in selectedCameraFilters
@@ -812,6 +818,7 @@ class MapsActivity : AppCompatActivity() {
         CameraFilterOption(FILTER_ESSEX, getString(R.string.camera_filter_essex)),
         CameraFilterOption(FILTER_TRAFFICVISION, getString(R.string.camera_filter_trafficvision)),
         CameraFilterOption(FILTER_WEBCAMS, getString(R.string.camera_filter_webcams)),
+        CameraFilterOption(FILTER_INSECAM, getString(R.string.camera_filter_insecam)),
         CameraFilterOption(FILTER_ISS, getString(R.string.camera_filter_iss)),
     )
 
@@ -823,6 +830,10 @@ class MapsActivity : AppCompatActivity() {
                 snippet = if (node.operator.isNotBlank() || node.type.isNotBlank()) "${node.operator} - ${node.type}" else ""
 
                 when {
+                    node.source == SOURCE_INSECAM -> {
+                        icon = markerIcon(INSECAM_COLOR)
+                        insecamOverlay.add(this)
+                    }
                     node.isWebcam -> {
                         icon = markerIcon(WEBCAM_COLOR)
                         webcamOverlay.add(this)
@@ -1272,10 +1283,10 @@ class MapsActivity : AppCompatActivity() {
         val tvStatus = view.findViewById<TextView>(R.id.tvWebcamStatus)
 
         tvLocation.text = node.titleStr
-        tvSource.text = if (node.source == SOURCE_TRAFFICVISION) {
-            getString(R.string.traffic_camera_source_live)
-        } else {
-            getString(R.string.webcam_source_live)
+        tvSource.text = when (node.source) {
+            SOURCE_TRAFFICVISION -> getString(R.string.traffic_camera_source_live)
+            SOURCE_INSECAM -> getString(R.string.insecam_source_live)
+            else -> getString(R.string.webcam_source_live)
         }
         tvStatus.text = getString(R.string.webcam_connecting)
 
@@ -1297,7 +1308,8 @@ class MapsActivity : AppCompatActivity() {
             ?.takeIf { CameraStreams.isDirectVideo(it, node.streamType) }
         lifecycleScope.launch {
             val playUrl = directUrl
-                ?: node.streamUrl?.let { PublicWebcamStreams.resolveLiveHlsUrl(it) }
+                ?: node.streamUrl?.takeIf { PublicWebcamStreams.isSkylinePage(it) }?.let { PublicWebcamStreams.resolveLiveHlsUrl(it) }
+                ?: node.streamUrl?.takeIf { InsecamStreams.isInsecamPage(it) }?.let { InsecamStreams.resolveStreamUrl(it) }
             if (playUrl.isNullOrBlank()) {
                 tvStatus.text = getString(R.string.webcam_stream_unavailable)
                 return@launch
@@ -1593,8 +1605,9 @@ class MapsActivity : AppCompatActivity() {
         val essexLabel = getString(R.string.legend_essex)
         val trafficVisionLabel = getString(R.string.legend_trafficvision)
         val webcamLabel = getString(R.string.legend_webcam)
+        val insecamLabel = getString(R.string.legend_insecam)
         val issLabel = getString(R.string.legend_iss)
-        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $londonLabel   $dot $highwayLabel   $dot $walesLabel   $dot $niLabel   $dot $essexLabel   $dot $trafficVisionLabel   $dot $webcamLabel   $dot $issLabel")
+        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $londonLabel   $dot $highwayLabel   $dot $walesLabel   $dot $niLabel   $dot $essexLabel   $dot $trafficVisionLabel   $dot $webcamLabel   $dot $insecamLabel   $dot $issLabel")
         val councilDot = legend.indexOf(dot, 1)
         val londonDot = legend.indexOf(dot, councilDot + 1)
         val highwayDot = legend.indexOf(dot, londonDot + 1)
@@ -1603,7 +1616,8 @@ class MapsActivity : AppCompatActivity() {
         val essexDot = legend.indexOf(dot, niDot + 1)
         val trafficVisionDot = legend.indexOf(dot, essexDot + 1)
         val webcamDot = legend.indexOf(dot, trafficVisionDot + 1)
-        val issDot = legend.indexOf(dot, webcamDot + 1)
+        val insecamDot = legend.indexOf(dot, webcamDot + 1)
+        val issDot = legend.indexOf(dot, insecamDot + 1)
         legend.setSpan(ForegroundColorSpan(MARKER_COLOR), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(
             ForegroundColorSpan(COUNCIL_COLOR),
@@ -1628,6 +1642,7 @@ class MapsActivity : AppCompatActivity() {
         legend.setSpan(ForegroundColorSpan(ESSEX_COLOR), essexDot, essexDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(ForegroundColorSpan(TRAFFICVISION_COLOR), trafficVisionDot, trafficVisionDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(ForegroundColorSpan(WEBCAM_COLOR), webcamDot, webcamDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        legend.setSpan(ForegroundColorSpan(INSECAM_COLOR), insecamDot, insecamDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(ForegroundColorSpan(ISS_COLOR), issDot, issDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legendView.text = legend
     }
@@ -1674,6 +1689,7 @@ class MapsActivity : AppCompatActivity() {
         const val SOURCE_TRAFFICWATCH_NI = "TrafficWatchNI"
         const val SOURCE_ESSEX_HIGHWAYS = "Essex Highways"
         const val SOURCE_TRAFFICVISION = "TrafficVision"
+        const val SOURCE_INSECAM = "INSECAM"
         const val SOURCE_ISS = "ISS"
         const val FILTER_PREFS = "camera_filter_preferences"
         const val FILTER_SELECTION = "selected_sources"
@@ -1687,6 +1703,7 @@ class MapsActivity : AppCompatActivity() {
         const val FILTER_ESSEX = "ESSEX"
         const val FILTER_TRAFFICVISION = "TRAFFICVISION"
         const val FILTER_WEBCAMS = "WEBCAMS"
+        const val FILTER_INSECAM = "INSECAM"
         const val FILTER_ISS = "ISS"
         val CAMERA_FILTER_KEYS = linkedSetOf(
             FILTER_OSM,
@@ -1698,6 +1715,7 @@ class MapsActivity : AppCompatActivity() {
             FILTER_ESSEX,
             FILTER_TRAFFICVISION,
             FILTER_WEBCAMS,
+            FILTER_INSECAM,
             FILTER_ISS,
         )
         const val DEFAULT_CAMERA_TITLE = "CCTV Camera"
@@ -1742,6 +1760,7 @@ class MapsActivity : AppCompatActivity() {
         val ESSEX_COLOR: Int = "#C2185B".toColorInt()
         val TRAFFICVISION_COLOR: Int = "#AEEA00".toColorInt()
         val WEBCAM_COLOR: Int = "#00BCD4".toColorInt()
+        val INSECAM_COLOR: Int = "#FF5722".toColorInt()
         val ISS_COLOR: Int = "#E040FB".toColorInt()
     }
 }

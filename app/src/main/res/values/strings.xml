@@ -25,6 +25,7 @@
     <string name="legend_essex">Essex Highways</string>
     <string name="legend_trafficvision">TrafficVision UK/Ireland</string>
     <string name="legend_webcam">Public Webcams</string>
+    <string name="legend_insecam">Insecam IP Cameras</string>
     <string name="legend_iss">ISS</string>
     <string name="iss_button">ISS</string>
     <string name="iss_title">ISS - LIVE HD VIEWS FROM SPACE</string>
@@ -51,11 +52,13 @@
     <string name="camera_filter_essex">Essex Highways</string>
     <string name="camera_filter_trafficvision">TrafficVision UK/Ireland</string>
     <string name="camera_filter_webcams">Public Webcams</string>
+    <string name="camera_filter_insecam">Insecam IP Cameras</string>
     <string name="camera_filter_iss">ISS</string>
     <string name="public_webcams">Public Webcams</string>
     <string name="search_webcams_hint">Search webcams, towns, or operators</string>
     <string name="webcam_directory_subtitle">Select a webcam to play its live feed and centre the map.</string>
     <string name="webcam_source_live">PUBLIC WEBCAM • LIVE HLS</string>
+    <string name="insecam_source_live">INSECAM IP CAMERA • LIVE FEED</string>
     <string name="traffic_camera_source_live">LIVE TRAFFIC CAMERA • STREAM</string>
     <string name="webcam_connecting">Connecting to the live feed…</string>
     <string name="webcam_live">LIVE • %1$s</string>

@@ -35,7 +35,7 @@ class PublicWebcamDataLoaderTest {
         val type = object : TypeToken<List<WebcamRecord>>() {}.type
         val records: List<WebcamRecord> = Gson().fromJson(requireNotNull(asset).readText(), type)
 
-        assertEquals("Expected 22 webcams in expanded catalogue", 22, records.size)
+        assertEquals("Expected 34 webcams in expanded catalogue", 34, records.size)
 
         val ids = records.map { it.id }
         assertTrue("Eernewoude HLS webcam missing", ids.contains("public-webcam-eernewoude-princenhof"))
@@ -60,6 +60,7 @@ class PublicWebcamDataLoaderTest {
         assertTrue("River Wye webcam missing", ids.contains("public-webcam-river-wye-hereford"))
         assertTrue("Sutton Coldfield webcam missing", ids.contains("public-webcam-sutton-coldfield"))
         assertTrue("Bala Gwynedd webcam missing", ids.contains("public-webcam-bala-gwynedd"))
+        assertTrue("Insecam London webcam missing", ids.contains("insecam-gb-1011059"))
 
         // SkylineWebcams hides its playlist behind a page, so these entries must stay marked
         // SKYLINE with the operator page as the stream URL for the resolver to find a feed.
