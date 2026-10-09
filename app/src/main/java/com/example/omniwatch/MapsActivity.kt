@@ -108,6 +108,7 @@ class MapsActivity : AppCompatActivity() {
     private var webcamLoaded = false
     private var trafficVisionLoaded = false
     private var activeWebcamPlayer: ExoPlayer? = null
+    private var activeInsecamView: InsecamMjpegView? = null
     private val selectedCameraFilters = linkedSetOf<String>()
 
     /** The station's last known position, the marker that follows it, and the job that polls it. */
@@ -400,6 +401,8 @@ class MapsActivity : AppCompatActivity() {
         issTrackingJob?.cancel()
         activeWebcamPlayer?.release()
         activeWebcamPlayer = null
+        activeInsecamView?.stop()
+        activeInsecamView = null
         super.onDestroy()
     }
 
@@ -974,6 +977,7 @@ class MapsActivity : AppCompatActivity() {
         val bottomSheetDialog = BottomSheetDialog(this)
 
         when {
+            node.source == SOURCE_INSECAM -> showInsecamMjpegSheet(bottomSheetDialog, node)
             canPlayDirectStream(node) -> showLiveWebcamSheet(bottomSheetDialog, node)
             shouldEmbedPlayer(node) && hasEmbeddableWebcamPage(node) ->
                 showExternalWebcamSheet(bottomSheetDialog, node)
@@ -1268,6 +1272,58 @@ class MapsActivity : AppCompatActivity() {
         if (streamUrl.isBlank()) return false
         return CameraStreams.isDirectVideo(streamUrl, node.streamType) ||
             PublicWebcamStreams.isSkylinePage(streamUrl)
+    }
+
+    /** Resolves an Insecam viewer page and renders its multipart MJPEG feed natively. */
+    private fun showInsecamMjpegSheet(bottomSheetDialog: BottomSheetDialog, node: CctvNode) {
+        val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_webcam, null)
+        val tvLocation = view.findViewById<TextView>(R.id.tvWebcamLocation)
+        val tvSource = view.findViewById<TextView>(R.id.tvWebcamSource)
+        val playerView = view.findViewById<PlayerView>(R.id.webcamPlayerView)
+        val mjpegView = view.findViewById<InsecamMjpegView>(R.id.insecamMjpegView)
+        val tvStatus = view.findViewById<TextView>(R.id.tvWebcamStatus)
+
+        tvLocation.text = node.titleStr
+        tvSource.text = getString(R.string.insecam_source_live)
+        tvStatus.text = getString(R.string.webcam_connecting)
+        playerView.visibility = View.GONE
+        mjpegView.visibility = View.VISIBLE
+
+        activeInsecamView?.stop()
+        activeInsecamView = mjpegView
+        var dismissed = false
+        bottomSheetDialog.setOnDismissListener {
+            dismissed = true
+            mjpegView.stop()
+            if (activeInsecamView === mjpegView) activeInsecamView = null
+        }
+        bottomSheetDialog.setContentView(view)
+        bottomSheetDialog.show()
+
+        lifecycleScope.launch {
+            val streamUrl = node.streamUrl
+                ?.takeIf { InsecamStreams.isInsecamPage(it) }
+                ?.let { InsecamStreams.resolveStreamUrl(it) }
+            if (streamUrl.isNullOrBlank()) {
+                if (!dismissed) tvStatus.text = getString(R.string.webcam_stream_unavailable)
+                return@launch
+            }
+            if (dismissed || isFinishing || isDestroyed) return@launch
+            mjpegView.start(streamUrl, object : InsecamMjpegView.Listener {
+                override fun onConnected() {
+                    if (!dismissed) tvStatus.text = getString(R.string.webcam_connecting)
+                }
+
+                override fun onFrame() {
+                    if (!dismissed) tvStatus.text = getString(R.string.webcam_live, node.operator.ifBlank { node.titleStr })
+                }
+
+                override fun onError(error: Throwable) {
+                    Log.w(TAG, "Insecam MJPEG playback failed for ${node.titleStr}", error)
+                    if (!dismissed) tvStatus.text = getString(R.string.webcam_playback_failed)
+                }
+            })
+        }
     }
 
     /**

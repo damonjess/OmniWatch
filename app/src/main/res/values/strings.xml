@@ -58,7 +58,7 @@
     <string name="search_webcams_hint">Search webcams, towns, or operators</string>
     <string name="webcam_directory_subtitle">Select a webcam to play its live feed and centre the map.</string>
     <string name="webcam_source_live">PUBLIC WEBCAM • LIVE HLS</string>
-    <string name="insecam_source_live">INSECAM IP CAMERA • LIVE FEED</string>
+    <string name="insecam_source_live">INSECAM IP CAMERA • MJPEG LIVE FEED</string>
     <string name="traffic_camera_source_live">LIVE TRAFFIC CAMERA • STREAM</string>
     <string name="webcam_connecting">Connecting to the live feed…</string>
     <string name="webcam_live">LIVE • %1$s</string>

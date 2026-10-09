@@ -76,6 +76,15 @@ object InsecamStreams {
             ?: IMAGE_STREAM_ALT_REGEX.find(html)?.groupValues?.getOrNull(1)
         val trimmed = direct?.trim().orEmpty()
         if (trimmed.isEmpty()) return null
-        return trimmed
+        
+        // Ensure the extracted URL has a valid scheme (http/https). 
+        // Insecam often returns relative URLs or URLs starting with //
+        return when {
+            trimmed.startsWith("http://", ignoreCase = true) -> trimmed
+            trimmed.startsWith("https://", ignoreCase = true) -> trimmed
+            trimmed.startsWith("//") -> "http:$trimmed"
+            trimmed.startsWith("/") -> "http://www.insecam.org$trimmed"
+            else -> "http://$trimmed"
+        }
     }
 }

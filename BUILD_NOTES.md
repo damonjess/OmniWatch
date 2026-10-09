@@ -24,6 +24,7 @@
 - Selecting an entry in the Public Webcams directory now plays its live feed straight away in addition to centring the map, so a second marker tap is no longer needed.
 - Non-Skyline WEB entries (YouTube, Twitch, Visit Dorset, CMAL) keep using the in-app WebView, because they still expose no direct HLS URL.
 - The app now remembers which Overpass mirror last answered and tries it first, instead of always starting with the top of a fixed list. This matters on networks that refuse TCP to the main `overpass-api.de` host while community mirrors still work; previously every viewport change paid for the unreachable host first. The failure reason shown in the map header is also reset per fetch so it cannot report a stale cause.
+- Insecam markers now open a native MJPEG viewer. Insecam publishes an HTTP viewer page whose embedded `mjpg/video.mjpg` endpoint is multipart JPEG, not HLS/MP4; it cannot be played by Media3 ExoPlayer. The app resolves the viewer page, reads JPEG frame boundaries on a worker thread, and draws frames in a native `InsecamMjpegView`. HLS/MP4 feeds continue using ExoPlayer.
 - Webcam entries with an unusable page no longer open a browser view. OpenStreetMap's `contact:webcam` tag is free text and contains values such as `CPE510` (a Wi-Fi bridge model) and `hhttp://...` (a mistyped scheme), which made a WebView render Chromium's own error page. Only a genuine `http(s)` address is embedded now; anything else opens the camera's detail sheet so the raw tag is visible.
 - Cleartext `http://` webcam snapshot URLs are upgraded to `https://` before loading. Android blocks cleartext for apps targeting recent API levels, so an http page could never load in the WebView; the snapshot hosts in the catalogue serve https.
 - A webcam page that still fails to load now reports it in plain language instead of leaving Chromium's error page on screen, and the external-webcam sheet wraps its content instead of expanding to fill the screen with black.
@@ -44,9 +45,13 @@ Public webcam test source: `https://webcam-friesemeren.nl/pages/cameras/eernewou
 2. Copy your existing `local.properties` into the project root beside `settings.gradle.kts`.
 3. Sync Gradle and run the `app` configuration.
 
+The project no longer pins the Gradle daemon to an unavailable Java 25 download. Android Studio's bundled JDK (Java 17 or newer; Java 21 is recommended for this project) can be used from **Settings > Build Tools > Gradle > Gradle JDK**.
+
 The National Highways CCTV catalogue and image host are public and do not require the WebTRIS subscription key. Keep your existing `local.properties` if you also use the key for other traffic integrations.
 
 ## Build verification
+
+The source changes were statically checked in this environment. An APK could not be produced here because the sandbox does not have an Android SDK (`SDK location not found`); Android Studio should build it after selecting an installed SDK and copying `local.properties`.
 
 - `./gradlew testDebugUnitTest assembleDebug`
 - Result: successful (30 unit tests)

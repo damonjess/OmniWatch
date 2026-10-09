@@ -12,6 +12,8 @@
             <option value="$PROJECT_DIR$/app" />
           </set>
         </option>
+        <option name="resolveExternalAnnotations" value="false" />
+        <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
       </GradleProjectSettings>
     </option>
   </component>

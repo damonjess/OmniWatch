@@ -25,12 +25,23 @@
         android:textStyle="bold"
         android:layout_marginBottom="12dp" />
 
-    <androidx.media3.ui.PlayerView
-        android:id="@+id/webcamPlayerView"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="220dp"
         android:background="#111111"
-        android:keepScreenOn="true" />
+        android:keepScreenOn="true">
+
+        <androidx.media3.ui.PlayerView
+            android:id="@+id/webcamPlayerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <com.example.omniwatch.InsecamMjpegView
+            android:id="@+id/insecamMjpegView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/tvWebcamStatus"
