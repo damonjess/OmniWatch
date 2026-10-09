@@ -42,9 +42,26 @@ class InsecamStreamsTest {
     }
 
     @Test
+    fun `decodes html entities in snapshot camera URLs`() {
+        val html = """<img id="image0" src="http://camera.example.com/SnapshotJPEG?Quality=Clarity&amp;COUNTER">"""
+
+        assertEquals(
+            "http://camera.example.com/SnapshotJPEG?Quality=Clarity&COUNTER",
+            InsecamStreams.extractStreamUrl(html),
+        )
+    }
+
+    @Test
     fun `returns null when no camera image tag is present`() {
         val html = "<html><body><h1>Camera Offline</h1></body></html>"
         assertNull(InsecamStreams.extractStreamUrl(html))
+    }
+
+    @Test
+    fun `uses direct camera stream URLs without resolving an Insecam page`() = kotlinx.coroutines.runBlocking {
+        val url = "http://87.74.69.86:80/mjpg/video.mjpg"
+
+        assertEquals(url, InsecamStreams.resolveStreamUrl(url))
     }
 
     @Test
@@ -56,8 +73,9 @@ class InsecamStreamsTest {
     }
 
     @Test
+    @org.junit.Ignore("Live network test")
     fun `live insecam page resolution check`() = kotlinx.coroutines.runBlocking {
         val url = InsecamStreams.resolveStreamUrl("http://www.insecam.org/en/view/1011059/")
-        println("RESOLVED INSECAM URL: $url")
+        assertTrue(url != null)
     }
 }

@@ -49,13 +49,21 @@ object InsecamStreams {
         url?.contains(INSECAM_HOST, ignoreCase = true) == true
 
     /**
-     * Resolves the direct live stream/image URL for [pageUrl]. Returns null when the page
-     * cannot be fetched or does not embed a camera stream.
+     * Resolves the direct live stream/image URL for an Insecam page, or returns an already
+     * direct HTTP(S) camera URL unchanged. Returns null when a page cannot be fetched or does
+     * not embed a camera stream.
      */
-    suspend fun resolveStreamUrl(pageUrl: String): String? = withContext(Dispatchers.IO) {
+    suspend fun resolveStreamUrl(pageOrStreamUrl: String): String? = withContext(Dispatchers.IO) {
+        if (!isInsecamPage(pageOrStreamUrl)) {
+            return@withContext pageOrStreamUrl.takeIf {
+                it.startsWith("http://", ignoreCase = true) ||
+                    it.startsWith("https://", ignoreCase = true)
+            }
+        }
+
         runCatching {
             val request = Request.Builder()
-                .url(pageUrl)
+                .url(pageOrStreamUrl)
                 .header("User-Agent", AppUserAgent.value)
                 .header("Accept", "text/html,application/xhtml+xml")
                 .build()
@@ -64,7 +72,7 @@ object InsecamStreams {
                 extractStreamUrl(response.body?.string().orEmpty())
             }
         }.onFailure { error ->
-            Log.w(TAG, "Could not resolve stream URL for $pageUrl", error)
+            Log.w(TAG, "Could not resolve stream URL for $pageOrStreamUrl", error)
         }.getOrNull()
     }
 
@@ -74,7 +82,7 @@ object InsecamStreams {
     internal fun extractStreamUrl(html: String): String? {
         val direct = IMAGE_STREAM_REGEX.find(html)?.groupValues?.getOrNull(1)
             ?: IMAGE_STREAM_ALT_REGEX.find(html)?.groupValues?.getOrNull(1)
-        val trimmed = direct?.trim().orEmpty()
+        val trimmed = direct?.trim()?.replace("&amp;", "&", ignoreCase = true).orEmpty()
         if (trimmed.isEmpty()) return null
         
         // Ensure the extracted URL has a valid scheme (http/https). 

@@ -1302,7 +1302,6 @@ class MapsActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val streamUrl = node.streamUrl
-                ?.takeIf { InsecamStreams.isInsecamPage(it) }
                 ?.let { InsecamStreams.resolveStreamUrl(it) }
             if (streamUrl.isNullOrBlank()) {
                 if (!dismissed) tvStatus.text = getString(R.string.webcam_stream_unavailable)
@@ -1365,7 +1364,7 @@ class MapsActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val playUrl = directUrl
                 ?: node.streamUrl?.takeIf { PublicWebcamStreams.isSkylinePage(it) }?.let { PublicWebcamStreams.resolveLiveHlsUrl(it) }
-                ?: node.streamUrl?.takeIf { InsecamStreams.isInsecamPage(it) }?.let { InsecamStreams.resolveStreamUrl(it) }
+                ?: node.streamUrl?.takeIf { node.source == SOURCE_INSECAM }?.let { InsecamStreams.resolveStreamUrl(it) }
             if (playUrl.isNullOrBlank()) {
                 tvStatus.text = getString(R.string.webcam_stream_unavailable)
                 return@launch

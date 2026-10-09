@@ -221,122 +221,232 @@
   },
   {
     "id": "insecam-gb-1011059",
-    "latitude": 51.5074,
-    "longitude": -0.1278,
-    "name": "Insecam IP Camera #1011059 (London)",
+    "latitude": 52.48142,
+    "longitude": -1.89983,
+    "name": "Insecam Axis Camera #1011059 (Birmingham)",
     "operator": "Insecam UK",
-    "streamUrl": "http://www.insecam.org/en/view/1011059/",
+    "streamUrl": "http://87.74.69.86:80/mjpg/video.mjpg",
     "streamType": "INSECAM",
     "websiteUrl": "http://www.insecam.org/en/view/1011059/"
   },
   {
-    "id": "insecam-gb-964281",
-    "latitude": 52.4862,
-    "longitude": -1.8904,
-    "name": "Insecam IP Camera (Birmingham)",
+    "id": "insecam-gb-1012453",
+    "latitude": 51.5074,
+    "longitude": -0.1278,
+    "name": "Insecam Panasonic Camera #1012453 (London)",
     "operator": "Insecam UK",
-    "streamUrl": "http://www.insecam.org/en/view/964281/",
+    "streamUrl": "http://www.insecam.org/en/view/1012453/",
     "streamType": "INSECAM",
-    "websiteUrl": "http://www.insecam.org/en/view/964281/"
+    "websiteUrl": "http://www.insecam.org/en/view/1012453/"
   },
   {
-    "id": "insecam-gb-833112",
-    "latitude": 53.4808,
-    "longitude": -2.2426,
-    "name": "Insecam IP Camera (Manchester)",
+    "id": "insecam-gb-1012698",
+    "latitude": 52.707755,
+    "longitude": -2.7540658,
+    "name": "Insecam Panasonic Camera #1012698 (Shrewsbury)",
     "operator": "Insecam UK",
-    "streamUrl": "http://www.insecam.org/en/view/833112/",
+    "streamUrl": "http://www.insecam.org/en/view/1012698/",
     "streamType": "INSECAM",
-    "websiteUrl": "http://www.insecam.org/en/view/833112/"
+    "websiteUrl": "http://www.insecam.org/en/view/1012698/"
   },
   {
-    "id": "insecam-gb-782190",
-    "latitude": 55.8642,
-    "longitude": -4.2518,
-    "name": "Insecam IP Camera (Glasgow)",
+    "id": "insecam-gb-1012559",
+    "latitude": 56.4496812,
+    "longitude": -3.3492258,
+    "name": "Insecam Panasonic Camera #1012559 (Balbeggie)",
     "operator": "Insecam UK",
-    "streamUrl": "http://www.insecam.org/en/view/782190/",
+    "streamUrl": "http://www.insecam.org/en/view/1012559/",
     "streamType": "INSECAM",
-    "websiteUrl": "http://www.insecam.org/en/view/782190/"
+    "websiteUrl": "http://www.insecam.org/en/view/1012559/"
   },
   {
-    "id": "insecam-gb-654321",
-    "latitude": 55.9533,
-    "longitude": -3.1883,
-    "name": "Insecam IP Camera (Edinburgh)",
+    "id": "insecam-gb-1012256",
+    "latitude": 51.4430141,
+    "longitude": -2.5816622,
+    "name": "Insecam Linksys Camera #1012256 (Bristol)",
     "operator": "Insecam UK",
-    "streamUrl": "http://www.insecam.org/en/view/654321/",
+    "streamUrl": "http://www.insecam.org/en/view/1012256/",
     "streamType": "INSECAM",
-    "websiteUrl": "http://www.insecam.org/en/view/654321/"
+    "websiteUrl": "http://www.insecam.org/en/view/1012256/"
   },
   {
-    "id": "insecam-gb-543210",
-    "latitude": 53.4084,
-    "longitude": -2.9916,
-    "name": "Insecam IP Camera (Liverpool)",
+    "id": "insecam-gb-1012235",
+    "latitude": 52.6025943,
+    "longitude": 0.3772655,
+    "name": "Insecam Linksys Camera #1012235 (Downham Market)",
     "operator": "Insecam UK",
-    "streamUrl": "http://www.insecam.org/en/view/543210/",
+    "streamUrl": "http://www.insecam.org/en/view/1012235/",
     "streamType": "INSECAM",
-    "websiteUrl": "http://www.insecam.org/en/view/543210/"
+    "websiteUrl": "http://www.insecam.org/en/view/1012235/"
   },
   {
-    "id": "insecam-gb-432109",
-    "latitude": 51.4545,
-    "longitude": -2.5879,
-    "name": "Insecam IP Camera (Bristol)",
+    "id": "insecam-gb-1012127",
+    "latitude": 50.6537344,
+    "longitude": -3.544555,
+    "name": "Insecam Ninivision Camera #1012127 (Kenn)",
     "operator": "Insecam UK",
-    "streamUrl": "http://www.insecam.org/en/view/432109/",
+    "streamUrl": "http://www.insecam.org/en/view/1012127/",
     "streamType": "INSECAM",
-    "websiteUrl": "http://www.insecam.org/en/view/432109/"
+    "websiteUrl": "http://www.insecam.org/en/view/1012127/"
   },
   {
-    "id": "insecam-gb-321098",
-    "latitude": 51.4816,
-    "longitude": -3.1791,
-    "name": "Insecam IP Camera (Cardiff)",
+    "id": "insecam-gb-1011726",
+    "latitude": 53.4424618,
+    "longitude": -2.2324547,
+    "name": "Insecam Axis Camera #1011726 (Manchester)",
     "operator": "Insecam UK",
-    "streamUrl": "http://www.insecam.org/en/view/321098/",
+    "streamUrl": "http://www.insecam.org/en/view/1011726/",
     "streamType": "INSECAM",
-    "websiteUrl": "http://www.insecam.org/en/view/321098/"
+    "websiteUrl": "http://www.insecam.org/en/view/1011726/"
   },
   {
-    "id": "insecam-gb-210987",
-    "latitude": 54.5973,
-    "longitude": -5.9301,
-    "name": "Insecam IP Camera (Belfast)",
+    "id": "insecam-gb-1011654",
+    "latitude": 54.0427178,
+    "longitude": -1.54175,
+    "name": "Insecam Axis Camera #1011654 (Nidd)",
     "operator": "Insecam UK",
-    "streamUrl": "http://www.insecam.org/en/view/210987/",
+    "streamUrl": "http://www.insecam.org/en/view/1011654/",
     "streamType": "INSECAM",
-    "websiteUrl": "http://www.insecam.org/en/view/210987/"
+    "websiteUrl": "http://www.insecam.org/en/view/1011654/"
   },
   {
-    "id": "insecam-gb-109876",
-    "latitude": 53.8008,
-    "longitude": -1.5491,
-    "name": "Insecam IP Camera (Leeds)",
+    "id": "insecam-gb-1011555",
+    "latitude": 53.9656579,
+    "longitude": -1.0743052,
+    "name": "Insecam Axis Camera #1011555 (York)",
     "operator": "Insecam UK",
-    "streamUrl": "http://www.insecam.org/en/view/109876/",
+    "streamUrl": "http://www.insecam.org/en/view/1011555/",
     "streamType": "INSECAM",
-    "websiteUrl": "http://www.insecam.org/en/view/109876/"
+    "websiteUrl": "http://www.insecam.org/en/view/1011555/"
   },
   {
-    "id": "insecam-gb-876543",
-    "latitude": 54.9783,
-    "longitude": -1.6178,
-    "name": "Insecam IP Camera (Newcastle)",
+    "id": "insecam-gb-1011197",
+    "latitude": 51.5074,
+    "longitude": -0.1278,
+    "name": "Insecam Axis Camera #1011197 (London)",
     "operator": "Insecam UK",
-    "streamUrl": "http://www.insecam.org/en/view/876543/",
+    "streamUrl": "http://www.insecam.org/en/view/1011197/",
     "streamType": "INSECAM",
-    "websiteUrl": "http://www.insecam.org/en/view/876543/"
+    "websiteUrl": "http://www.insecam.org/en/view/1011197/"
   },
   {
-    "id": "insecam-gb-765432",
-    "latitude": 53.3811,
-    "longitude": -1.4701,
-    "name": "Insecam IP Camera (Sheffield)",
+    "id": "insecam-gb-1010292",
+    "latitude": 51.5074,
+    "longitude": -0.1278,
+    "name": "Insecam Megapixel Camera #1010292 (London)",
     "operator": "Insecam UK",
-    "streamUrl": "http://www.insecam.org/en/view/765432/",
+    "streamUrl": "http://www.insecam.org/en/view/1010292/",
     "streamType": "INSECAM",
-    "websiteUrl": "http://www.insecam.org/en/view/765432/"
+    "websiteUrl": "http://www.insecam.org/en/view/1010292/"
+  },
+  {
+    "id": "insecam-gb-964411",
+    "latitude": 50.8214626,
+    "longitude": -0.1400561,
+    "name": "Insecam Vivotek Camera #964411 (Brighton)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/964411/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/964411/"
+  },
+  {
+    "id": "insecam-gb-964408",
+    "latitude": 50.8214626,
+    "longitude": -0.1400561,
+    "name": "Insecam Vivotek Camera #964408 (Brighton)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/964408/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/964408/"
+  },
+  {
+    "id": "insecam-gb-932345",
+    "latitude": 52.0553813,
+    "longitude": -2.7151735,
+    "name": "Insecam Linksys Camera #932345 (Hereford)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/932345/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/932345/"
+  },
+  {
+    "id": "insecam-gb-906603",
+    "latitude": 52.5147064,
+    "longitude": 0.407273,
+    "name": "Insecam Axis Camera #906603 (Southery)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/906603/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/906603/"
+  },
+  {
+    "id": "insecam-gb-873170",
+    "latitude": 51.5074,
+    "longitude": -0.1278,
+    "name": "Insecam Axis Camera #873170 (London)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/873170/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/873170/"
+  },
+  {
+    "id": "insecam-gb-850577",
+    "latitude": 51.6714842,
+    "longitude": -1.2779715,
+    "name": "Insecam Axis Camera #850577 (Abingdon)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/850577/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/850577/"
+  },
+  {
+    "id": "insecam-gb-809464",
+    "latitude": 53.3933411,
+    "longitude": -2.9166389,
+    "name": "Insecam Axis Camera #809464 (Liverpool)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/809464/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/809464/"
+  },
+  {
+    "id": "insecam-gb-551005",
+    "latitude": 53.0052605,
+    "longitude": -1.1255532,
+    "name": "Insecam Axis Camera #551005 (Arnold)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/551005/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/551005/"
+  },
+  {
+    "id": "insecam-gb-257932",
+    "latitude": 51.5074,
+    "longitude": -0.1278,
+    "name": "Insecam Axis Camera #257932 (London)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/257932/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/257932/"
+  },
+  {
+    "id": "insecam-gb-251593",
+    "latitude": 51.5074,
+    "longitude": -0.1278,
+    "name": "Insecam Panasonic Camera #251593 (London)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/251593/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/251593/"
+  },
+  {
+    "id": "insecam-gb-237453",
+    "latitude": 53.3058355,
+    "longitude": -2.2375778,
+    "name": "Insecam Axis Camera #237453 (Alderley Edge)",
+    "operator": "Insecam UK",
+    "streamUrl": "http://www.insecam.org/en/view/237453/",
+    "streamType": "INSECAM",
+    "websiteUrl": "http://www.insecam.org/en/view/237453/"
   }
 ]

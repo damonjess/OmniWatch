@@ -40,6 +40,7 @@ class InsecamMjpegView @JvmOverloads constructor(
         .readTimeout(0, TimeUnit.MILLISECONDS)
         .build()
     private val stopped = AtomicBoolean(true)
+    @Volatile
     private var call: Call? = null
     private var bitmap: Bitmap? = null
     private var listener: Listener? = null
@@ -53,15 +54,7 @@ class InsecamMjpegView @JvmOverloads constructor(
         stop()
         this.listener = listener
         stopped.set(false)
-        call = client.newCall(
-            Request.Builder()
-                .url(url)
-                .header("User-Agent", AppUserAgent.value)
-                .header("Accept", "multipart/x-mixed-replace,image/jpeg")
-                .build()
-        )
-        val activeCall = call ?: return
-        Thread({ readFrames(activeCall) }, "insecam-mjpeg").apply {
+        Thread({ readFrames(url) }, "insecam-mjpeg").apply {
             isDaemon = true
         }.start()
     }
@@ -78,49 +71,77 @@ class InsecamMjpegView @JvmOverloads constructor(
         }
     }
 
-    private fun readFrames(activeCall: Call) {
+    private fun readFrames(url: String) {
         try {
-            activeCall.execute().use { response ->
-                if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
-                val body = response.body ?: throw IOException("Empty MJPEG response")
-                listener?.let { post { it.onConnected() } }
-                BufferedInputStream(body.byteStream()).use { input ->
-                    val frame = ByteArrayOutputStream(256 * 1024)
-                    var inFrame = false
-                    var previousWasFf = false
-                    while (!stopped.get()) {
-                        val value = input.read()
-                        if (value == -1) break
-                        val byte = value and 0xff
-                        if (!inFrame) {
-                            if (previousWasFf && byte == 0xd8) {
-                                frame.reset()
-                                frame.write(0xff)
-                                frame.write(0xd8)
-                                inFrame = true
-                                previousWasFf = false
-                            } else {
-                                previousWasFf = byte == 0xff
-                            }
-                            continue
-                        }
-
-                        frame.write(byte)
-                        if (previousWasFf && byte == 0xd9) {
-                            publishFrame(frame.toByteArray())
-                            frame.reset()
-                            inFrame = false
-                            previousWasFf = false
-                        } else {
-                            previousWasFf = byte == 0xff
-                        }
+            var connected = false
+            while (!stopped.get()) {
+                val activeCall = client.newCall(
+                    Request.Builder()
+                        .url(url)
+                        .header("User-Agent", AppUserAgent.value)
+                        .header("Accept", "multipart/x-mixed-replace,image/jpeg")
+                        .build()
+                )
+                call = activeCall
+                if (stopped.get()) activeCall.cancel()
+                val isSnapshot = activeCall.execute().use { response ->
+                    if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
+                    val body = response.body ?: throw IOException("Empty MJPEG response")
+                    if (!connected) {
+                        connected = true
+                        listener?.let { post { it.onConnected() } }
                     }
+                    val contentType = body.contentType()
+                    val snapshot = contentType?.type == "image" &&
+                        (contentType.subtype == "jpeg" || contentType.subtype == "jpg")
+                    if (snapshot) {
+                        publishFrame(body.bytes())
+                    } else {
+                        readMultipartFrames(body)
+                    }
+                    snapshot
                 }
+                if (!isSnapshot && !stopped.get()) throw IOException("MJPEG stream ended")
+                if (isSnapshot && !stopped.get()) Thread.sleep(300)
             }
-            if (!stopped.get()) throw IOException("MJPEG stream ended")
         } catch (error: Throwable) {
             if (!stopped.get()) {
                 post { listener?.onError(error) }
+            }
+        }
+    }
+
+    private fun readMultipartFrames(body: okhttp3.ResponseBody) {
+        BufferedInputStream(body.byteStream()).use { input ->
+            val frame = ByteArrayOutputStream(256 * 1024)
+            var inFrame = false
+            var previousWasFf = false
+            while (!stopped.get()) {
+                val value = input.read()
+                if (value == -1) break
+                val byte = value and 0xff
+                if (!inFrame) {
+                    if (previousWasFf && byte == 0xd8) {
+                        frame.reset()
+                        frame.write(0xff)
+                        frame.write(0xd8)
+                        inFrame = true
+                        previousWasFf = false
+                    } else {
+                        previousWasFf = byte == 0xff
+                    }
+                    continue
+                }
+
+                frame.write(byte)
+                if (previousWasFf && byte == 0xd9) {
+                    publishFrame(frame.toByteArray())
+                    frame.reset()
+                    inFrame = false
+                    previousWasFf = false
+                } else {
+                    previousWasFf = byte == 0xff
+                }
             }
         }
     }
