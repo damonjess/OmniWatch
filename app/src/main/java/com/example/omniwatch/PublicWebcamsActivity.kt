@@ -8,6 +8,8 @@ import android.widget.ListView
 import android.widget.SearchView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.example.omniwatch.data.db.CameraEntity
 
 /** Directory of curated public webcams; selecting one returns its map location. */
@@ -23,6 +25,11 @@ class PublicWebcamsActivity : AppCompatActivity() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(20, 18, 20, 12)
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(20, systemBars.top + 18, 20, 12)
+            insets
         }
         val search = SearchView(this).apply {
             queryHint = getString(R.string.search_webcams_hint)
