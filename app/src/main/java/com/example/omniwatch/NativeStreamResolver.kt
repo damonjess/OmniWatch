@@ -48,6 +48,13 @@ object NativeStreamResolver {
     private val YOUTUBE_ID_REGEX = Regex(
         """(?:youtube(?:-nocookie)?\.com/(?:watch\?(?:[^#]*&)?v=|live/|embed/)|youtu\.be/)([A-Za-z0-9_-]{6,})"""
     )
+    private val YOUTUBE_CHANNEL_REGEX = Regex(
+        """youtube\.com/channel/([A-Za-z0-9_-]{10,})/live(?:[/?#]|$)"""
+    )
+    private val YOUTUBE_CANONICAL_REGEX = Regex(
+        """<link\s+rel=["']canonical["']\s+href=["']https://www\.youtube\.com/watch\?v=([A-Za-z0-9_-]{6,})""",
+        RegexOption.IGNORE_CASE,
+    )
     private val TWITCH_PLAYER_REGEX =
         Regex("""player\.twitch\.tv/\?(?:[^#]*&)?channel=([A-Za-z0-9_]{3,25})""")
     private val TWITCH_CHANNEL_REGEX =
@@ -69,6 +76,13 @@ object NativeStreamResolver {
     internal fun youtubeVideoId(url: String?): String? =
         url?.let { YOUTUBE_ID_REGEX.find(it)?.groupValues?.getOrNull(1) }
 
+    internal fun youtubeChannelId(url: String?): String? =
+        url?.let { YOUTUBE_CHANNEL_REGEX.find(it)?.groupValues?.getOrNull(1) }
+
+    internal fun extractYoutubeVideoIdFromChannelPage(html: String): String? =
+        YOUTUBE_CANONICAL_REGEX.find(html)?.groupValues?.getOrNull(1)
+            ?: YOUTUBE_ID_REGEX.find(html)?.groupValues?.getOrNull(1)
+
     internal fun twitchChannel(url: String?): String? {
         if (url.isNullOrBlank()) return null
         TWITCH_PLAYER_REGEX.find(url)?.groupValues?.getOrNull(1)?.let { return it }
@@ -78,7 +92,7 @@ object NativeStreamResolver {
 
     /** True for pages that have a dedicated resolver (YouTube, Twitch). */
     fun isResolvablePage(url: String?): Boolean =
-        youtubeVideoId(url) != null || twitchChannel(url) != null
+        youtubeVideoId(url) != null || youtubeChannelId(url) != null || twitchChannel(url) != null
 
     // ---------------------------------------------------------------- resolving
 
@@ -86,9 +100,11 @@ object NativeStreamResolver {
     suspend fun resolve(pageUrl: String): Resolved? = withContext(Dispatchers.IO) {
         try {
             val youtubeId = youtubeVideoId(pageUrl)
+            val youtubeChannel = youtubeChannelId(pageUrl)
             val twitch = twitchChannel(pageUrl)
             when {
                 youtubeId != null -> resolveYoutube(youtubeId)
+                youtubeChannel != null -> resolveYoutubeChannel(youtubeChannel)?.let { resolveYoutube(it) }
                 twitch != null -> resolveTwitch(twitch)
                 else -> resolveGeneric(pageUrl)
             }
@@ -142,6 +158,25 @@ object NativeStreamResolver {
             embedded = true,
         ),
     )
+
+    /**
+     * Resolves a channel's /live page to the current live video. YouTube redirects the page to
+     * the active broadcast, so the final URL is more reliable than scraping a channel listing.
+     */
+    private fun resolveYoutubeChannel(channelId: String): String? {
+        val request = Request.Builder()
+            .url("https://www.youtube.com/channel/$channelId/live")
+            .header("User-Agent", BROWSER_USER_AGENT)
+            .header("Accept-Language", "en-GB,en;q=0.9")
+            .build()
+        return httpClient.newCall(request).execute().use { response ->
+            val redirectedId = response.request.url.queryParameter("v")
+                ?.takeIf { it.matches(Regex("[A-Za-z0-9_-]{6,}")) }
+            if (redirectedId != null) return@use redirectedId
+            val body = response.body?.string().orEmpty()
+            extractYoutubeVideoIdFromChannelPage(body)
+        }
+    }
 
     private fun resolveYoutube(videoId: String): Resolved? {
         for (client in YOUTUBE_CLIENTS) {

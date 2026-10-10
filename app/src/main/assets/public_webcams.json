@@ -220,6 +220,36 @@
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/bala-gwynedd.html"
   },
   {
+    "id": "webcamtaxi-london-traffic",
+    "latitude": 51.5074,
+    "longitude": -0.1278,
+    "name": "London Traffic Cam",
+    "operator": "Webcamtaxi / TfL",
+    "streamUrl": "https://s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/00001.02500.mp4",
+    "streamType": "MP4",
+    "websiteUrl": "https://www.webcamtaxi.com/en/england/london/london-traffic.html"
+  },
+  {
+    "id": "webcamtaxi-london-underground",
+    "latitude": 51.5032,
+    "longitude": -0.1295,
+    "name": "London Underground Cam",
+    "operator": "Webcamtaxi / YouTube",
+    "streamUrl": "https://www.youtube.com/channel/UCmEC5XS9Ol-6jqBaKpzqehQ/live",
+    "streamType": "YOUTUBE",
+    "websiteUrl": "https://www.webcamtaxi.com/en/england/london/underground-railway-system.html"
+  },
+  {
+    "id": "webcamtaxi-london-bus-tour",
+    "latitude": 51.5032,
+    "longitude": -0.1295,
+    "name": "London Bus Tour Cam",
+    "operator": "Webcamtaxi / YouTube",
+    "streamUrl": "https://www.youtube.com/watch?v=wDaV8EkYHmk",
+    "streamType": "YOUTUBE",
+    "websiteUrl": "https://www.webcamtaxi.com/en/england/london/bus-tour-cam.html"
+  },
+  {
     "id": "insecam-gb-1011059",
     "latitude": 52.48142,
     "longitude": -1.89983,

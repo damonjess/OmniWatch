@@ -18,6 +18,25 @@ class NativeStreamResolverTest {
     }
 
     @Test
+    fun youtubeLiveChannelIdIsFound() {
+        assertEquals(
+            "UCmEC5XS9Ol-6jqBaKpzqehQ",
+            NativeStreamResolver.youtubeChannelId("https://www.youtube.com/channel/UCmEC5XS9Ol-6jqBaKpzqehQ/live"),
+        )
+        assertNull(NativeStreamResolver.youtubeChannelId("https://www.youtube.com/watch?v=H3A2RSYTzdI"))
+    }
+
+    @Test
+    fun youtubeChannelPageCanonicalVideoIsExtracted() {
+        assertEquals(
+            "gzV7uUxwgwI",
+            NativeStreamResolver.extractYoutubeVideoIdFromChannelPage(
+                "<link rel=\"canonical\" href=\"https://www.youtube.com/watch?v=gzV7uUxwgwI\">",
+            ),
+        )
+    }
+
+    @Test
     fun twitchChannelIsFoundInPlayerAndChannelLinks() {
         assertEquals(
             "cmaloban",
@@ -31,6 +50,7 @@ class NativeStreamResolverTest {
     @Test
     fun onlyYoutubeAndTwitchPagesAreResolvable() {
         assertTrue(NativeStreamResolver.isResolvablePage("https://www.youtube.com/watch?v=H3A2RSYTzdI"))
+        assertTrue(NativeStreamResolver.isResolvablePage("https://www.youtube.com/channel/UCmEC5XS9Ol-6jqBaKpzqehQ/live"))
         assertTrue(NativeStreamResolver.isResolvablePage("https://player.twitch.tv/?channel=cmaloban"))
         assertFalse(NativeStreamResolver.isResolvablePage("https://example.com/cam.html"))
         assertFalse(NativeStreamResolver.isResolvablePage(null))
