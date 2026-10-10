@@ -70,4 +70,18 @@ class PublicWebcamStreamsTest {
         assertFalse(PublicWebcamStreams.isSkylinePage("https://www.youtube.com/watch?v=H3A2RSYTzdI"))
         assertFalse(PublicWebcamStreams.isSkylinePage(null))
     }
+
+    @Test
+    fun `a playlist named under another key is still found`() {
+        val html = """<script>player({file:"https://cdn.example.com/x/live.m3u8?t=1"})</script>"""
+        assertEquals(
+            "https://cdn.example.com/x/live.m3u8?t=1",
+            PublicWebcamStreams.extractPlaylistUrl(html),
+        )
+        val escaped = """<script>var cfg={"hls":"https:\/\/cdn.example.com\/y\/index.m3u8"}</script>"""
+        assertEquals(
+            "https://cdn.example.com/y/index.m3u8",
+            PublicWebcamStreams.extractPlaylistUrl(escaped),
+        )
+    }
 }

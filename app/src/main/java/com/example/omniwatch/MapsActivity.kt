@@ -1406,10 +1406,18 @@ class MapsActivity : AppCompatActivity() {
                     ?.takeIf { NativeStreamResolver.isResolvablePage(it) }
                     ?.let { NativeStreamResolver.resolve(it) }
             }
-            val playUrl = resolved?.url
+            var playUrl = resolved?.url
                 ?: directUrl
                 ?: node.streamUrl?.takeIf { PublicWebcamStreams.isSkylinePage(it) }?.let { PublicWebcamStreams.resolveLiveHlsUrl(it) }
                 ?: node.streamUrl?.takeIf { node.source == SOURCE_INSECAM }?.let { InsecamStreams.resolveStreamUrl(it) }
+            // Not every Skyline page carries the usual token player: some cameras are embedded
+            // differently (for example a YouTube or partner stream). Before giving up, scan the
+            // page for any stream ExoPlayer can play.
+            val skylineUrl = node.streamUrl?.takeIf { PublicWebcamStreams.isSkylinePage(it) }
+            if (playUrl.isNullOrBlank() && skylineUrl != null) {
+                resolved = NativeStreamResolver.resolve(skylineUrl)
+                playUrl = resolved?.url
+            }
             if (playUrl.isNullOrBlank()) {
                 tvStatus.text = getString(R.string.webcam_stream_unavailable)
                 return@launch

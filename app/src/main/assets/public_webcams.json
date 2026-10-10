@@ -1188,5 +1188,795 @@
     "streamUrl": "https://www.webcamtaxi.com/en/england/west-sussex/brighton-city-airport-cam.html",
     "streamType": "YOUTUBE",
     "websiteUrl": "https://www.webcamtaxi.com/en/england/west-sussex/brighton-city-airport-cam.html"
+  },
+  {
+    "id": "public-webcam-skyline-trevi-fountain-rome",
+    "latitude": 41.9009,
+    "longitude": 12.4833,
+    "name": "Trevi Fountain, Rome (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/lazio/roma/fontana-di-trevi.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/lazio/roma/fontana-di-trevi.html"
+  },
+  {
+    "id": "public-webcam-skyline-piazza-di-spagna-rome",
+    "latitude": 41.906,
+    "longitude": 12.4823,
+    "name": "Piazza di Spagna, Rome (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/lazio/roma/piazza-di-spagna.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/lazio/roma/piazza-di-spagna.html"
+  },
+  {
+    "id": "public-webcam-skyline-colosseum-rome",
+    "latitude": 41.8902,
+    "longitude": 12.4922,
+    "name": "Colosseum, Rome (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/lazio/roma/roma-colosseo.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/lazio/roma/roma-colosseo.html"
+  },
+  {
+    "id": "public-webcam-skyline-piazza-navona-rome",
+    "latitude": 41.8992,
+    "longitude": 12.4731,
+    "name": "Piazza Navona, Rome (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/lazio/roma/piazza-navona.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/lazio/roma/piazza-navona.html"
+  },
+  {
+    "id": "public-webcam-skyline-piazza-venezia-rome",
+    "latitude": 41.8956,
+    "longitude": 12.4823,
+    "name": "Piazza Venezia, Rome (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/lazio/roma/piazza-venezia.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/lazio/roma/piazza-venezia.html"
+  },
+  {
+    "id": "public-webcam-skyline-campo-de-fiori-rome",
+    "latitude": 41.8956,
+    "longitude": 12.4722,
+    "name": "Campo de' Fiori, Rome (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/lazio/roma/campo-de-fiori.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/lazio/roma/campo-de-fiori.html"
+  },
+  {
+    "id": "public-webcam-skyline-piazza-san-marco-venice",
+    "latitude": 45.434,
+    "longitude": 12.3388,
+    "name": "Piazza San Marco, Venice (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/veneto/venezia/piazza-san-marco.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/veneto/venezia/piazza-san-marco.html"
+  },
+  {
+    "id": "public-webcam-skyline-rialto-bridge-venice",
+    "latitude": 45.438,
+    "longitude": 12.3359,
+    "name": "Rialto Bridge, Venice (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/veneto/venezia/rialto-canal-grande.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/veneto/venezia/rialto-canal-grande.html"
+  },
+  {
+    "id": "public-webcam-skyline-calatrava-bridge-venice",
+    "latitude": 45.4396,
+    "longitude": 12.3203,
+    "name": "Calatrava Bridge, Venice (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/veneto/venezia/ponte-di-calatrava.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/veneto/venezia/ponte-di-calatrava.html"
+  },
+  {
+    "id": "public-webcam-skyline-duomo-milan",
+    "latitude": 45.4642,
+    "longitude": 9.1916,
+    "name": "Milan Cathedral (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/lombardia/milano/duomo-milano.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/lombardia/milano/duomo-milano.html"
+  },
+  {
+    "id": "public-webcam-skyline-ponte-vecchio-florence",
+    "latitude": 43.768,
+    "longitude": 11.2531,
+    "name": "Ponte Vecchio, Florence (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/toscana/firenze/ponte-vecchio.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/toscana/firenze/ponte-vecchio.html"
+  },
+  {
+    "id": "public-webcam-skyline-piazza-duomo-florence",
+    "latitude": 43.7731,
+    "longitude": 11.256,
+    "name": "Piazza del Duomo, Florence (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/toscana/firenze/piazza-duomo-firenze.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/toscana/firenze/piazza-duomo-firenze.html"
+  },
+  {
+    "id": "public-webcam-skyline-pisa-leaning-tower",
+    "latitude": 43.723,
+    "longitude": 10.3966,
+    "name": "Pisa, Piazza dei Miracoli (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/toscana/pisa/pisa.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/toscana/pisa/pisa.html"
+  },
+  {
+    "id": "public-webcam-skyline-mount-etna",
+    "latitude": 37.751,
+    "longitude": 14.9934,
+    "name": "Mount Etna, Sicily (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/sicilia/catania/vulcano-etna.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/sicilia/catania/vulcano-etna.html"
+  },
+  {
+    "id": "public-webcam-skyline-piazza-plebiscito-naples",
+    "latitude": 40.8358,
+    "longitude": 14.2487,
+    "name": "Piazza del Plebiscito, Naples (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/campania/napoli/piazza-del-plebiscito.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/campania/napoli/piazza-del-plebiscito.html"
+  },
+  {
+    "id": "public-webcam-skyline-amalfi-coast",
+    "latitude": 40.634,
+    "longitude": 14.6027,
+    "name": "Amalfi (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/campania/salerno/costiera-amalfi.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/campania/salerno/costiera-amalfi.html"
+  },
+  {
+    "id": "public-webcam-skyline-positano-beach",
+    "latitude": 40.6281,
+    "longitude": 14.485,
+    "name": "Positano Beach (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/campania/salerno/spiaggia-positano.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/campania/salerno/spiaggia-positano.html"
+  },
+  {
+    "id": "public-webcam-skyline-capri-panorama",
+    "latitude": 40.5532,
+    "longitude": 14.2222,
+    "name": "Capri (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/campania/napoli/capri-skyline.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/campania/napoli/capri-skyline.html"
+  },
+  {
+    "id": "public-webcam-skyline-verona-arena",
+    "latitude": 45.439,
+    "longitude": 10.9942,
+    "name": "Verona Arena (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/veneto/verona/arena-di-verona.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/veneto/verona/arena-di-verona.html"
+  },
+  {
+    "id": "public-webcam-skyline-boccadasse-genoa",
+    "latitude": 44.3837,
+    "longitude": 8.976,
+    "name": "Boccadasse, Genoa (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/liguria/genova/boccadasse-genova.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/liguria/genova/boccadasse-genova.html"
+  },
+  {
+    "id": "public-webcam-skyline-polignano-a-mare",
+    "latitude": 40.9965,
+    "longitude": 17.22,
+    "name": "Polignano a Mare (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/puglia/bari/polignano-a-mare.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/puglia/bari/polignano-a-mare.html"
+  },
+  {
+    "id": "public-webcam-skyline-stintino-la-pelosa",
+    "latitude": 40.9737,
+    "longitude": 8.219,
+    "name": "La Pelosa, Stintino (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/sardegna/sassari/stintino.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/sardegna/sassari/stintino.html"
+  },
+  {
+    "id": "public-webcam-skyline-cortina-d-ampezzo",
+    "latitude": 46.5405,
+    "longitude": 12.1357,
+    "name": "Cortina d'Ampezzo (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/veneto/belluno/cortina-d-ampezzo.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/veneto/belluno/cortina-d-ampezzo.html"
+  },
+  {
+    "id": "public-webcam-skyline-misurina-tre-cime",
+    "latitude": 46.5878,
+    "longitude": 12.2552,
+    "name": "Misurina, Tre Cime di Lavaredo (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/veneto/belluno/misurina-le-tre-cime-di-lavaredo.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/veneto/belluno/misurina-le-tre-cime-di-lavaredo.html"
+  },
+  {
+    "id": "public-webcam-skyline-sanremo-ariston",
+    "latitude": 43.8159,
+    "longitude": 7.776,
+    "name": "Sanremo, Teatro Ariston (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/liguria/imperia/festival-sanremo-ariston.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/liguria/imperia/festival-sanremo-ariston.html"
+  },
+  {
+    "id": "public-webcam-skyline-bologna-two-towers",
+    "latitude": 44.4943,
+    "longitude": 11.3467,
+    "name": "Asinelli and Garisenda Towers, Bologna (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/emilia-romagna/bologna/bologna-torre-degli-asinelli.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/emilia-romagna/bologna/bologna-torre-degli-asinelli.html"
+  },
+  {
+    "id": "public-webcam-skyline-piazza-unita-trieste",
+    "latitude": 45.6495,
+    "longitude": 13.7768,
+    "name": "Piazza Unit\u00e0 d'Italia, Trieste (Italy)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/italia/friuli-venezia-giulia/trieste/piazza-unita-italia.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/italia/friuli-venezia-giulia/trieste/piazza-unita-italia.html"
+  },
+  {
+    "id": "public-webcam-skyline-los-cristianos-tenerife",
+    "latitude": 28.0505,
+    "longitude": -16.716,
+    "name": "Playa de Los Cristianos, Tenerife (Spain)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/espana/canarias/santa-cruz-de-tenerife/playa-los-cristianos.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/espana/canarias/santa-cruz-de-tenerife/playa-los-cristianos.html"
+  },
+  {
+    "id": "public-webcam-skyline-las-vistas-tenerife",
+    "latitude": 28.0572,
+    "longitude": -16.7213,
+    "name": "Las Vistas Beach, Tenerife (Spain)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/espana/canarias/santa-cruz-de-tenerife/playa-las-vistas.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/espana/canarias/santa-cruz-de-tenerife/playa-las-vistas.html"
+  },
+  {
+    "id": "public-webcam-skyline-playa-del-duque-tenerife",
+    "latitude": 28.099,
+    "longitude": -16.738,
+    "name": "Playa del Duque, Tenerife (Spain)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/espana/canarias/santa-cruz-de-tenerife/playa-del-duque.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/espana/canarias/santa-cruz-de-tenerife/playa-del-duque.html"
+  },
+  {
+    "id": "public-webcam-skyline-teide-tenerife",
+    "latitude": 28.2724,
+    "longitude": -16.642,
+    "name": "Teide Volcano, Tenerife (Spain)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/espana/canarias/santa-cruz-de-tenerife/volcano-teide.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/espana/canarias/santa-cruz-de-tenerife/volcano-teide.html"
+  },
+  {
+    "id": "public-webcam-skyline-el-medano-tenerife",
+    "latitude": 28.047,
+    "longitude": -16.537,
+    "name": "El M\u00e9dano, Tenerife (Spain)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/espana/canarias/santa-cruz-de-tenerife/playa-de-el-medano.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/espana/canarias/santa-cruz-de-tenerife/playa-de-el-medano.html"
+  },
+  {
+    "id": "public-webcam-skyline-las-canteras-gran-canaria",
+    "latitude": 28.137,
+    "longitude": -15.438,
+    "name": "Playa Grande, Las Canteras, Gran Canaria (Spain)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/espana/canarias/las-palmas-gran-canaria/playa-grande-las-canteras.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/espana/canarias/las-palmas-gran-canaria/playa-grande-las-canteras.html"
+  },
+  {
+    "id": "public-webcam-skyline-plaza-del-callao-madrid",
+    "latitude": 40.4203,
+    "longitude": -3.706,
+    "name": "Plaza del Callao, Madrid (Spain)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/espana/comunidad-de-madrid/madrid/madrid-plaza-del-callao.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/espana/comunidad-de-madrid/madrid/madrid-plaza-del-callao.html"
+  },
+  {
+    "id": "public-webcam-skyline-benidorm-levante",
+    "latitude": 38.54,
+    "longitude": -0.122,
+    "name": "Playa de Levante, Benidorm (Spain)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/espana/comunidad-valenciana/alicante/benidorm-playa-alicante.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/espana/comunidad-valenciana/alicante/benidorm-playa-alicante.html"
+  },
+  {
+    "id": "public-webcam-skyline-sardinero-santander",
+    "latitude": 43.475,
+    "longitude": -3.787,
+    "name": "Playa del Sardinero, Santander (Spain)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/espana/cantabria/santander/playa-del-sardinero.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/espana/cantabria/santander/playa-del-sardinero.html"
+  },
+  {
+    "id": "public-webcam-skyline-lloret-de-mar",
+    "latitude": 41.699,
+    "longitude": 2.845,
+    "name": "Lloret de Mar, Costa Brava (Spain)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/espana/cataluna/gerona/lloret-de-mar-costa-brava.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/espana/cataluna/gerona/lloret-de-mar-costa-brava.html"
+  },
+  {
+    "id": "public-webcam-skyline-santorini-firostefani",
+    "latitude": 36.426,
+    "longitude": 25.427,
+    "name": "Santorini, Firostefani (Greece)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/ellada/naigaio/kyklades/santorini-firostefani.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/ellada/naigaio/kyklades/santorini-firostefani.html"
+  },
+  {
+    "id": "public-webcam-skyline-parga-krioneri",
+    "latitude": 39.2848,
+    "longitude": 20.399,
+    "name": "Parga, Krioneri Beach (Greece)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/ellada/epirus/preveza/parga.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/ellada/epirus/preveza/parga.html"
+  },
+  {
+    "id": "public-webcam-skyline-hellenic-parliament-athens",
+    "latitude": 37.9755,
+    "longitude": 23.7348,
+    "name": "Hellenic Parliament, Athens (Greece)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/ellada/atiki/athina/hellenic-parliament.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/ellada/atiki/athina/hellenic-parliament.html"
+  },
+  {
+    "id": "public-webcam-skyline-aristotelous-square-thessaloniki",
+    "latitude": 40.6325,
+    "longitude": 22.9415,
+    "name": "Aristotelous Square, Thessaloniki (Greece)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/ellada/makedonia/thessaloniki/plateia-aristotelous.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/ellada/makedonia/thessaloniki/plateia-aristotelous.html"
+  },
+  {
+    "id": "public-webcam-skyline-meteora",
+    "latitude": 39.7217,
+    "longitude": 21.6306,
+    "name": "Meteora Monasteries (Greece)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/ellada/thessalia/trikala/meteora.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/ellada/thessalia/trikala/meteora.html"
+  },
+  {
+    "id": "public-webcam-skyline-corfu-sidari",
+    "latitude": 39.7867,
+    "longitude": 19.7046,
+    "name": "Sidari, Corfu (Greece)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/ellada/ionian-islands/corfu/corfu-sidari.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/ellada/ionian-islands/corfu/corfu-sidari.html"
+  },
+  {
+    "id": "public-webcam-skyline-valletta-grand-harbour",
+    "latitude": 35.896,
+    "longitude": 14.52,
+    "name": "Grand Harbour, Valletta (Malta)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/malta/malta/floriana/grand-harbour-valletta-waterfront.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/malta/malta/floriana/grand-harbour-valletta-waterfront.html"
+  },
+  {
+    "id": "public-webcam-skyline-valletta-st-georges-square",
+    "latitude": 35.8972,
+    "longitude": 14.5126,
+    "name": "St. George's Square, Valletta (Malta)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/malta/malta/valletta/st-george-square-valletta.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/malta/malta/valletta/st-george-square-valletta.html"
+  },
+  {
+    "id": "public-webcam-skyline-st-georges-bay-malta",
+    "latitude": 35.918,
+    "longitude": 14.488,
+    "name": "St. George's Bay, St. Julian's (Malta)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/malta/malta/st-julians/st-george-beach.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/malta/malta/st-julians/st-george-beach.html"
+  },
+  {
+    "id": "public-webcam-skyline-spinola-bay-malta",
+    "latitude": 35.9188,
+    "longitude": 14.4905,
+    "name": "Spinola Bay, St. Julian's (Malta)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/malta/malta/st-julians/spinola-bay.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/malta/malta/st-julians/spinola-bay.html"
+  },
+  {
+    "id": "public-webcam-skyline-marsaxlokk-malta",
+    "latitude": 35.842,
+    "longitude": 14.543,
+    "name": "Marsaxlokk Harbour (Malta)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/malta/malta/marsaxlokk/marsaxlokk-seaside-promenade.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/malta/malta/marsaxlokk/marsaxlokk-seaside-promenade.html"
+  },
+  {
+    "id": "public-webcam-skyline-eiffel-tower-paris",
+    "latitude": 48.8584,
+    "longitude": 2.2945,
+    "name": "Eiffel Tower, Paris (France)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/france/ile-de-france/paris/tour-eiffel.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/france/ile-de-france/paris/tour-eiffel.html"
+  },
+  {
+    "id": "public-webcam-skyline-prague-old-town-square",
+    "latitude": 50.0875,
+    "longitude": 14.4213,
+    "name": "Old Town Square, Prague (Czech Republic)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/czech-republic/prague/prague/prague.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/czech-republic/prague/prague/prague.html"
+  },
+  {
+    "id": "public-webcam-skyline-lagos-portugal",
+    "latitude": 37.101,
+    "longitude": -8.674,
+    "name": "Lagos, Algarve (Portugal)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/portugal/algarve/lagos/lagos-portugal.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/portugal/algarve/lagos/lagos-portugal.html"
+  },
+  {
+    "id": "public-webcam-skyline-paradise-beach-lopar",
+    "latitude": 44.811,
+    "longitude": 14.726,
+    "name": "Paradise Beach, Lopar, Rab (Croatia)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/hrvatska/primorsko-goranska/rab/paradise-beach.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/hrvatska/primorsko-goranska/rab/paradise-beach.html"
+  },
+  {
+    "id": "public-webcam-skyline-tartini-square-piran",
+    "latitude": 45.5282,
+    "longitude": 13.5683,
+    "name": "Tartini Square, Piran (Slovenia)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/slovenija/primorska/piran/trg-tartini.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/slovenija/primorska/piran/trg-tartini.html"
+  },
+  {
+    "id": "public-webcam-skyline-jokulsarlon-iceland",
+    "latitude": 64.0484,
+    "longitude": -16.179,
+    "name": "J\u00f6kuls\u00e1rl\u00f3n Glacier Lagoon (Iceland)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/iceland/austurland/hofn/jokulsarlon.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/iceland/austurland/hofn/jokulsarlon.html"
+  },
+  {
+    "id": "public-webcam-skyline-henningsvaer-lofoten",
+    "latitude": 68.153,
+    "longitude": 14.202,
+    "name": "Henningsv\u00e6r, Lofoten (Norway)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/henningsvaer.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/henningsvaer.html"
+  },
+  {
+    "id": "public-webcam-skyline-reine-lofoten",
+    "latitude": 67.932,
+    "longitude": 13.089,
+    "name": "Reine, Lofoten (Norway)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/reine.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/reine.html"
+  },
+  {
+    "id": "public-webcam-skyline-niedzica-castle",
+    "latitude": 49.417,
+    "longitude": 20.319,
+    "name": "Niedzica Castle (Poland)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/poland/lesser-poland-voivodeship/nowy-targ-county/niedzica.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/poland/lesser-poland-voivodeship/nowy-targ-county/niedzica.html"
+  },
+  {
+    "id": "public-webcam-skyline-durres-beach",
+    "latitude": 41.323,
+    "longitude": 19.444,
+    "name": "Durr\u00ebs Beach (Albania)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/albania/durres/durres/durres-beach.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/albania/durres/durres/durres-beach.html"
+  },
+  {
+    "id": "public-webcam-skyline-cappadocia-uchisar",
+    "latitude": 38.63,
+    "longitude": 34.804,
+    "name": "U\u00e7hisar, Cappadocia (Turkey)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/turkey/anatolia-region/nevsehir/cappadocia-uchisar.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/turkey/anatolia-region/nevsehir/cappadocia-uchisar.html"
+  },
+  {
+    "id": "public-webcam-skyline-times-square-new-york",
+    "latitude": 40.758,
+    "longitude": -73.9855,
+    "name": "Times Square, New York (USA)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/times-square.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/times-square.html"
+  },
+  {
+    "id": "public-webcam-skyline-empire-state-building",
+    "latitude": 40.7484,
+    "longitude": -73.9857,
+    "name": "Empire State Building, New York (USA)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/empire-state-building.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/empire-state-building.html"
+  },
+  {
+    "id": "public-webcam-skyline-nyc-230-fifth",
+    "latitude": 40.7441,
+    "longitude": -73.9877,
+    "name": "NYC Skyline from 230 Fifth, New York (USA)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/230-fifth.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/230-fifth.html"
+  },
+  {
+    "id": "public-webcam-skyline-46th-street-new-york",
+    "latitude": 40.7583,
+    "longitude": -73.9842,
+    "name": "46th Street, New York (USA)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/46th-street.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/46th-street.html"
+  },
+  {
+    "id": "public-webcam-skyline-times-square-ball-drop",
+    "latitude": 40.7558,
+    "longitude": -73.9865,
+    "name": "Times Square Ball Drop, New York (USA)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/times-square-ball-drop.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/times-square-ball-drop.html"
+  },
+  {
+    "id": "public-webcam-skyline-broadway-49th-street",
+    "latitude": 40.7607,
+    "longitude": -73.9835,
+    "name": "Broadway Billboards at 49th Street, New York (USA)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/broadway-49th-street.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/broadway-49th-street.html"
+  },
+  {
+    "id": "public-webcam-skyline-times-square-podcast",
+    "latitude": 40.758,
+    "longitude": -73.9855,
+    "name": "Times Square Podcast Studio, New York (USA)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/times-square-podcast.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/times-square-podcast.html"
+  },
+  {
+    "id": "public-webcam-skyline-cabo-san-lucas",
+    "latitude": 22.8905,
+    "longitude": -109.912,
+    "name": "Cabo San Lucas (Mexico)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/mexico/baja-california-sur/cabo-san-lucas/cabo-san-lucas.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/mexico/baja-california-sur/cabo-san-lucas/cabo-san-lucas.html"
+  },
+  {
+    "id": "public-webcam-skyline-ushuaia-port",
+    "latitude": -54.8069,
+    "longitude": -68.304,
+    "name": "Ushuaia Port, Tierra del Fuego (Argentina)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/argentina/tierra-del-fuego/ushuaia/ushuaia.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/argentina/tierra-del-fuego/ushuaia/ushuaia.html"
+  },
+  {
+    "id": "public-webcam-skyline-cusco-plaza-mayor",
+    "latitude": -13.5164,
+    "longitude": -71.9785,
+    "name": "Plaza Mayor, Cusco (Peru)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/peru/cusco/cusco/plaza-mayor.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/peru/cusco/cusco/plaza-mayor.html"
+  },
+  {
+    "id": "public-webcam-skyline-water-island-usvi",
+    "latitude": 18.32,
+    "longitude": -64.96,
+    "name": "Water Island, Honeymoon Beach (US Virgin Islands)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/us-virgin-islands/st-thomas/water-island/water-island.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/us-virgin-islands/st-thomas/water-island/water-island.html"
+  },
+  {
+    "id": "public-webcam-skyline-skyline-shanghai",
+    "latitude": 31.2397,
+    "longitude": 121.4998,
+    "name": "Lujiazui Skyline, Shanghai (China)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/china/shanghai/shanghai/skyline-of-shanghai.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/china/shanghai/shanghai/skyline-of-shanghai.html"
+  },
+  {
+    "id": "public-webcam-skyline-western-wall-jerusalem",
+    "latitude": 31.7767,
+    "longitude": 35.2345,
+    "name": "Western Wall, Jerusalem (Israel)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/israel/jerusalem-district/jerusalem/western-wall.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/israel/jerusalem-district/jerusalem/western-wall.html"
+  },
+  {
+    "id": "public-webcam-skyline-petra-treasury",
+    "latitude": 30.3216,
+    "longitude": 35.4513,
+    "name": "Petra, The Treasury (Jordan)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/jordan/maan/amman/petra-the-treasury.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/jordan/maan/amman/petra-the-treasury.html"
+  },
+  {
+    "id": "public-webcam-skyline-sydney-harbour",
+    "latitude": -33.8523,
+    "longitude": 151.2108,
+    "name": "Sydney Harbour (Australia)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/australia/new-south-wales/sydney/sydney.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/australia/new-south-wales/sydney/sydney.html"
+  },
+  {
+    "id": "public-webcam-skyline-kuredu-maldives",
+    "latitude": 5.5733,
+    "longitude": 73.471,
+    "name": "Kuredu Island Resort (Maldives)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/maldives/lhaviyani-atoll/kurendhoo/maldives-kuredu.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/maldives/lhaviyani-atoll/kurendhoo/maldives-kuredu.html"
+  },
+  {
+    "id": "public-webcam-skyline-beau-vallon-seychelles",
+    "latitude": -4.62,
+    "longitude": 55.444,
+    "name": "Beau Vallon, Mah\u00e9 (Seychelles)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/seychelles/mahe/beau-vallon/beau-vallon-seychelles.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/seychelles/mahe/beau-vallon/beau-vallon-seychelles.html"
+  },
+  {
+    "id": "public-webcam-skyline-nungwi-zanzibar",
+    "latitude": -5.726,
+    "longitude": 39.297,
+    "name": "Nungwi Beach, Zanzibar (Tanzania)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/zanzibar/zanzibar-north/nungwi/zanzibar-nungwi.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/zanzibar/zanzibar-north/nungwi/zanzibar-nungwi.html"
+  },
+  {
+    "id": "public-webcam-skyline-el-nido-philippines",
+    "latitude": 11.1784,
+    "longitude": 119.393,
+    "name": "El Nido, Palawan (Philippines)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/philippines/mimaropa/palawan/el-nido.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/philippines/mimaropa/palawan/el-nido.html"
+  },
+  {
+    "id": "public-webcam-skyline-watamu-beach-kenya",
+    "latitude": -3.354,
+    "longitude": 40.02,
+    "name": "Watamu Beach (Kenya)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/kenya/malindi/watamu/watamu-beach.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/kenya/malindi/watamu/watamu-beach.html"
   }
 ]

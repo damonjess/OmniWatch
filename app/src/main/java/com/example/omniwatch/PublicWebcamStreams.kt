@@ -34,6 +34,13 @@ object PublicWebcamStreams {
     private val PLAYER_SOURCE_REGEX =
         Regex("""(?:url|source)\s*:\s*['"]([^'"]+\.m3u8[^'"]*)['"]""")
 
+    /**
+     * Last resort for pages that name the playlist under some other key (`file`, `src`, `hls`...):
+     * any quoted string that contains an `.m3u8` address.
+     */
+    private val ANY_QUOTED_PLAYLIST_REGEX =
+        Regex("""['"]([^'"\s]*\.m3u8[^'"\s]*)['"]""")
+
     /** Fallback for pages that already spell out the signed playlist host. */
     private val ABSOLUTE_PLAYLIST_REGEX =
         Regex("""https?://hd-auth\.skylinewebcams\.com/[^'"\s]+\.m3u8[^'"\s]*""")
@@ -62,8 +69,21 @@ object PublicWebcamStreams {
                 .header("Accept", "text/html,application/xhtml+xml")
                 .build()
             httpClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return@use null
-                extractPlaylistUrl(response.body?.string().orEmpty())
+                if (!response.isSuccessful) {
+                    Log.w(TAG, "Skyline page returned HTTP ${response.code} for $pageUrl")
+                    return@use null
+                }
+                val html = response.body?.string().orEmpty()
+                extractPlaylistUrl(html).also { found ->
+                    if (found == null) {
+                        Log.w(
+                            TAG,
+                            "No Skyline playlist in $pageUrl (page ${html.length} chars, " +
+                                "mentions m3u8: ${html.contains(".m3u8")}, " +
+                                "mentions youtube: ${html.contains("youtube", ignoreCase = true)})",
+                        )
+                    }
+                }
             }
         }.onFailure { error ->
             Log.w(TAG, "Could not resolve the live stream for $pageUrl", error)
@@ -77,6 +97,7 @@ object PublicWebcamStreams {
     internal fun extractPlaylistUrl(html: String): String? {
         val source = PLAYER_SOURCE_REGEX.find(html)?.groupValues?.getOrNull(1)
             ?: ABSOLUTE_PLAYLIST_REGEX.find(html)?.value
+            ?: ANY_QUOTED_PLAYLIST_REGEX.find(html.replace("\\/", "/"))?.groupValues?.getOrNull(1)
         return toPlayableUrl(source)
     }
 

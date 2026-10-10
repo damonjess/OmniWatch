@@ -36,7 +36,7 @@ class PublicWebcamDataLoaderTest {
         val type = object : TypeToken<List<WebcamRecord>>() {}.type
         val records: List<WebcamRecord> = Gson().fromJson(requireNotNull(asset).readText(), type)
 
-        assertEquals("Expected 119 webcams in expanded catalogue", 119, records.size)
+        assertEquals("Expected 198 webcams in expanded catalogue", 198, records.size)
 
         val ids = records.map { it.id }
         val ukInsecamIds = listOf(
@@ -104,7 +104,7 @@ class PublicWebcamDataLoaderTest {
         // SkylineWebcams hides its playlist behind a page, so these entries must stay marked
         // SKYLINE with the operator page as the stream URL for the resolver to find a feed.
         val skyline = records.filter { it.streamType.equals("SKYLINE", ignoreCase = true) }
-        assertEquals("Expected 18 SkylineWebcams entries marked SKYLINE", 18, skyline.size)
+        assertEquals("Expected 97 SkylineWebcams entries marked SKYLINE", 97, skyline.size)
         skyline.forEach { record ->
             assertTrue(
                 "Skyline entry ${record.id} must point at a resolvable operator page",
