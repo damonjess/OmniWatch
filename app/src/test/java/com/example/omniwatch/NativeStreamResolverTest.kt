@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Ignore
 import org.junit.Test
 
 class NativeStreamResolverTest {
@@ -93,6 +94,7 @@ class NativeStreamResolverTest {
         assertTrue(NativeStreamResolver.isResolvablePage("https://www.webcamtaxi.com/en/england/west-sussex/brighton-city-airport-cam.html"))
     }
 
+    @Ignore("Requires live Webcamtaxi network access")
     @Test
     fun webcamtaxiBrightonCityAirportCamResolvesToLiveHlsStream() = kotlinx.coroutines.runBlocking {
         val resolved = NativeStreamResolver.resolve("https://www.webcamtaxi.com/en/england/west-sussex/brighton-city-airport-cam.html")
