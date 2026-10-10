@@ -979,8 +979,12 @@ class MapsActivity : AppCompatActivity() {
         when {
             node.source == SOURCE_INSECAM -> showInsecamMjpegSheet(bottomSheetDialog, node)
             canPlayDirectStream(node) -> showLiveWebcamSheet(bottomSheetDialog, node)
-            shouldEmbedPlayer(node) && hasEmbeddableWebcamPage(node) ->
-                showExternalWebcamSheet(bottomSheetDialog, node)
+            shouldEmbedPlayer(node) && hasEmbeddableWebcamPage(node) -> {
+                // Any other webcam page: look for a stream ExoPlayer can play first. The sheet is
+                // opened by the helper once the answer is known, so nothing is shown here.
+                showWebcamPageNatively(bottomSheetDialog, node)
+                return
+            }
             !node.imageUrl.isNullOrBlank() -> showTrafficCameraSheet(bottomSheetDialog, node)
             hasEmbeddableWebcamPage(node) -> showExternalWebcamSheet(bottomSheetDialog, node)
             else -> showDetailSheet(bottomSheetDialog, node)
@@ -1271,7 +1275,36 @@ class MapsActivity : AppCompatActivity() {
         val streamUrl = node.streamUrl ?: return false
         if (streamUrl.isBlank()) return false
         return CameraStreams.isDirectVideo(streamUrl, node.streamType) ||
-            PublicWebcamStreams.isSkylinePage(streamUrl)
+            PublicWebcamStreams.isSkylinePage(streamUrl) ||
+            NativeStreamResolver.isResolvablePage(streamUrl)
+    }
+
+    /**
+     * For a webcam page with no direct stream (OpenStreetMap `contact:webcam` pages, TrafficVision
+     * YouTube feeds): try to find a playable stream and play it in ExoPlayer. Only when nothing
+     * can be found does it fall back to the embedded page, and only if [ALLOW_WEBVIEW_FALLBACK]
+     * is true; otherwise the camera's detail card opens.
+     */
+    private fun showWebcamPageNatively(bottomSheetDialog: BottomSheetDialog, node: CctvNode) {
+        val pageUrl = node.tags["youtubeVideoId"]?.takeIf { it.isNotBlank() }
+            ?.let { "https://www.youtube.com/watch?v=$it" }
+            ?: node.streamUrl?.takeIf { it.isNotBlank() }
+            ?: node.websiteUrl
+        lifecycleScope.launch {
+            val resolved = pageUrl?.let { NativeStreamResolver.resolve(it) }
+            if (isFinishing || isDestroyed) return@launch
+            when {
+                resolved != null -> showLiveWebcamSheet(bottomSheetDialog, node, resolved)
+                ALLOW_WEBVIEW_FALLBACK -> {
+                    showExternalWebcamSheet(bottomSheetDialog, node)
+                    bottomSheetDialog.show()
+                }
+                else -> {
+                    showDetailSheet(bottomSheetDialog, node)
+                    bottomSheetDialog.show()
+                }
+            }
+        }
     }
 
     /** Resolves an Insecam viewer page and renders its multipart MJPEG feed natively. */
@@ -1330,7 +1363,11 @@ class MapsActivity : AppCompatActivity() {
      * (SkylineWebcams) have it resolved first, so the sheet opens straight away in a connecting
      * state and the player is attached once the playlist URL is known.
      */
-    private fun showLiveWebcamSheet(bottomSheetDialog: BottomSheetDialog, node: CctvNode) {
+    private fun showLiveWebcamSheet(
+        bottomSheetDialog: BottomSheetDialog,
+        node: CctvNode,
+        preResolved: NativeStreamResolver.Resolved? = null,
+    ) {
         val view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_webcam, null)
         val tvLocation = view.findViewById<TextView>(R.id.tvWebcamLocation)
         val tvSource = view.findViewById<TextView>(R.id.tvWebcamSource)
@@ -1362,7 +1399,15 @@ class MapsActivity : AppCompatActivity() {
         val directUrl = node.streamUrl
             ?.takeIf { CameraStreams.isDirectVideo(it, node.streamType) }
         lifecycleScope.launch {
-            val playUrl = directUrl
+            // YouTube, Twitch and scraped pages come back with the headers their stream needs.
+            var resolved: NativeStreamResolver.Resolved? = preResolved
+            if (resolved == null && directUrl == null) {
+                resolved = node.streamUrl
+                    ?.takeIf { NativeStreamResolver.isResolvablePage(it) }
+                    ?.let { NativeStreamResolver.resolve(it) }
+            }
+            val playUrl = resolved?.url
+                ?: directUrl
                 ?: node.streamUrl?.takeIf { PublicWebcamStreams.isSkylinePage(it) }?.let { PublicWebcamStreams.resolveLiveHlsUrl(it) }
                 ?: node.streamUrl?.takeIf { node.source == SOURCE_INSECAM }?.let { InsecamStreams.resolveStreamUrl(it) }
             if (playUrl.isNullOrBlank()) {
@@ -1374,7 +1419,7 @@ class MapsActivity : AppCompatActivity() {
             if (dismissed || isFinishing || isDestroyed) return@launch
 
             val newPlayer = ExoPlayer.Builder(this@MapsActivity)
-                .setMediaSourceFactory(mediaSourceFactory(node))
+                .setMediaSourceFactory(mediaSourceFactory(node, resolved?.headers.orEmpty()))
                 .build()
             player = newPlayer
             activeWebcamPlayer = newPlayer
@@ -1408,7 +1453,7 @@ class MapsActivity : AppCompatActivity() {
             // explicitly rather than inferred from the URI. A progressive MP4 is left for the
             // player to infer from the file itself.
             val mediaItem = MediaItem.Builder().setUri(playUrl)
-            val kind = CameraStreams.kind(playUrl, node.streamType)
+            val kind = resolved?.kind ?: CameraStreams.kind(playUrl, node.streamType)
             if (kind == CameraStreams.HLS) {
                 mediaItem.setMimeType(MimeTypes.APPLICATION_M3U8)
             }
@@ -1612,14 +1657,21 @@ class MapsActivity : AppCompatActivity() {
      * only; public webcams keep the player's default request headers.
      */
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-    private fun mediaSourceFactory(node: CctvNode): MediaSource.Factory {
-        if (node.source != SOURCE_TRAFFICVISION) return DefaultMediaSourceFactory(this)
-        val httpFactory = DefaultHttpDataSource.Factory().setDefaultRequestProperties(
-            mapOf(
+    private fun mediaSourceFactory(
+        node: CctvNode,
+        extraHeaders: Map<String, String> = emptyMap(),
+    ): MediaSource.Factory {
+        val headers = when {
+            extraHeaders.isNotEmpty() -> extraHeaders
+            node.source == SOURCE_TRAFFICVISION -> mapOf(
                 "Referer" to TRAFFICVISION_REFERER,
                 "User-Agent" to BROWSER_USER_AGENT,
             )
-        )
+            else -> return DefaultMediaSourceFactory(this)
+        }
+        val httpFactory = DefaultHttpDataSource.Factory()
+            .setDefaultRequestProperties(headers)
+            .setAllowCrossProtocolRedirects(true)
         return DefaultMediaSourceFactory(DefaultDataSource.Factory(this, httpFactory))
     }
 
@@ -1797,6 +1849,13 @@ class MapsActivity : AppCompatActivity() {
         const val ISS_CENTRE_ANIMATION_MS = 1_000L
         const val ISS_ZOOM_LEVEL = 4.0
         const val ISS_MARKER_SIZE_DP = 22
+
+        /**
+         * When no native stream can be found for a webcam page, open the page in the in-app
+         * WebView (true) or the camera's detail card (false). The catalogue's own YouTube, Twitch
+         * and Skyline entries never use this; it only affects pages from OpenStreetMap tags.
+         */
+        const val ALLOW_WEBVIEW_FALLBACK = true
 
         const val HEDGE_DELAY_MS = 5_000L
         const val MIN_FETCH_INTERVAL_MS = 3_000L

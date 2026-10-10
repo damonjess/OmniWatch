@@ -76,6 +76,8 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
 
     // Retrofit & Gson for network requests and data parsing
+    // Used directly by the stream resolvers (toRequestBody / toMediaType / toHttpUrl need 4.x).
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
 
