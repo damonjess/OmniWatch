@@ -36,7 +36,7 @@ class PublicWebcamDataLoaderTest {
         val type = object : TypeToken<List<WebcamRecord>>() {}.type
         val records: List<WebcamRecord> = Gson().fromJson(requireNotNull(asset).readText(), type)
 
-        assertEquals("Expected 48 webcams in expanded catalogue", 48, records.size)
+        assertEquals("Expected 52 webcams in expanded catalogue", 52, records.size)
 
         val ids = records.map { it.id }
         val ukInsecamIds = listOf(
@@ -79,6 +79,15 @@ class PublicWebcamDataLoaderTest {
         val londonBusTour = records.first { it.id == "webcamtaxi-london-bus-tour" }
         assertEquals("YOUTUBE", londonBusTour.streamType)
         assertTrue(londonBusTour.streamUrl.endsWith("watch?v=wDaV8EkYHmk"))
+        val firstUkBatch = records.filter { it.id in setOf(
+            "webcamtaxi-university-oxford",
+            "webcamtaxi-penybanc-ammanford",
+            "webcamtaxi-polzeath-beach",
+            "webcamtaxi-shepards-wharf-cowes",
+        ) }
+        assertEquals(4, firstUkBatch.size)
+        assertTrue(firstUkBatch.all { it.streamType == "YOUTUBE" })
+        assertTrue(firstUkBatch.all { it.websiteUrl.startsWith("https://www.webcamtaxi.com/en/") })
         assertTrue("Insecam Birmingham webcam missing", ids.contains("insecam-gb-1011059"))
         assertTrue("Insecam London webcam missing", ids.contains("insecam-gb-1012453"))
         val birminghamInsecam = records.first { it.id == "insecam-gb-1011059" }

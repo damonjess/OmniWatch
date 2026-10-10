@@ -220,6 +220,46 @@
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-kingdom/wales/gwynedd/bala-gwynedd.html"
   },
   {
+    "id": "webcamtaxi-university-oxford",
+    "latitude": 51.75489998,
+    "longitude": -1.25629068,
+    "name": "University of Oxford Cam",
+    "operator": "Webcamtaxi / YouTube",
+    "streamUrl": "https://www.youtube.com/watch?v=h8glPXsnezU",
+    "streamType": "YOUTUBE",
+    "websiteUrl": "https://www.webcamtaxi.com/en/england/oxfordshire/university-oxford.html"
+  },
+  {
+    "id": "webcamtaxi-penybanc-ammanford",
+    "latitude": 51.78797130,
+    "longitude": -4.00759205,
+    "name": "Penybanc Road, Ammanford Cam",
+    "operator": "Webcamtaxi / YouTube",
+    "streamUrl": "https://www.youtube.com/watch?v=m4TeKkcMwT4",
+    "streamType": "YOUTUBE",
+    "websiteUrl": "https://www.webcamtaxi.com/en/wales/carmarthenshire/penybanc-road-ammanford.html"
+  },
+  {
+    "id": "webcamtaxi-polzeath-beach",
+    "latitude": 50.57397798,
+    "longitude": -4.91932168,
+    "name": "Polzeath Beach Cam",
+    "operator": "Webcamtaxi / YouTube",
+    "streamUrl": "https://www.youtube.com/channel/UCiizs91Obdveqoce7kSmImA/live",
+    "streamType": "YOUTUBE",
+    "websiteUrl": "https://www.webcamtaxi.com/en/england/cornwall/polzeath-beach.html"
+  },
+  {
+    "id": "webcamtaxi-shepards-wharf-cowes",
+    "latitude": 50.75983298,
+    "longitude": -1.29799468,
+    "name": "Shepards Wharf Marina, Cowes Cam",
+    "operator": "Webcamtaxi / YouTube",
+    "streamUrl": "https://www.youtube.com/channel/UCEZakpc_Sk9v4PU-LqzLXOA/live",
+    "streamType": "YOUTUBE",
+    "websiteUrl": "https://www.webcamtaxi.com/en/england/isle-of-wight/shepards-wharf-marina-cowes.html"
+  },
+  {
     "id": "webcamtaxi-london-traffic",
     "latitude": 51.5074,
     "longitude": -0.1278,
