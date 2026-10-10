@@ -14,6 +14,7 @@ class NativeStreamResolverTest {
         assertEquals("rulGLEdCHZU", NativeStreamResolver.youtubeVideoId("https://www.youtube.com/watch?feature=share&v=rulGLEdCHZU"))
         assertEquals("awQzjn72bI0", NativeStreamResolver.youtubeVideoId("https://www.youtube-nocookie.com/embed/awQzjn72bI0?autoplay=1"))
         assertEquals("abcDEF12345", NativeStreamResolver.youtubeVideoId("https://youtu.be/abcDEF12345"))
+        assertEquals("H3A2RSYTzdI", NativeStreamResolver.youtubeVideoId("""<html><body><iframe src="https://www.youtube-nocookie.com/embed/H3A2RSYTzdI?autoplay=1"></iframe></body></html>"""))
         assertNull(NativeStreamResolver.youtubeVideoId("https://example.com/watch?v=abc"))
     }
 
@@ -74,6 +75,30 @@ class NativeStreamResolverTest {
         assertEquals("""{"channel":"x"}""", token?.first)
         assertEquals("abc123", token?.second)
         assertNull(NativeStreamResolver.parseTwitchToken("""{"data":{"streamPlaybackAccessToken":null}}"""))
+    }
+
+    @Test
+    fun youtubeEmbedLiveStreamChannelIsFound() {
+        assertEquals(
+            "UCcjlnrL3_LV4fC9CcrHth7w",
+            NativeStreamResolver.youtubeChannelId("https://www.youtube-nocookie.com/embed/live_stream?channel=UCcjlnrL3_LV4fC9CcrHth7w&autoplay=1&mute=1&rel=0"),
+        )
+        assertNull(
+            NativeStreamResolver.youtubeVideoId("https://www.youtube-nocookie.com/embed/live_stream?channel=UCcjlnrL3_LV4fC9CcrHth7w"),
+        )
+    }
+
+    @Test
+    fun webcamtaxiPagesAreResolvable() {
+        assertTrue(NativeStreamResolver.isResolvablePage("https://www.webcamtaxi.com/en/england/west-sussex/brighton-city-airport-cam.html"))
+    }
+
+    @Test
+    fun webcamtaxiBrightonCityAirportCamResolvesToLiveHlsStream() = kotlinx.coroutines.runBlocking {
+        val resolved = NativeStreamResolver.resolve("https://www.webcamtaxi.com/en/england/west-sussex/brighton-city-airport-cam.html")
+        assertTrue("Expected non-null resolved stream", resolved != null)
+        assertEquals(CameraStreams.HLS, resolved?.kind)
+        assertTrue("Expected manifest url", resolved?.url?.contains(".m3u8") == true || resolved?.url?.contains("manifest") == true)
     }
 
     @Test

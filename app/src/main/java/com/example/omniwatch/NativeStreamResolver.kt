@@ -46,10 +46,11 @@ object NativeStreamResolver {
     private const val TWITCH_CLIENT_ID = "kimne78kh0ncgl6j9vzmw0wv3ykpqa"
 
     private val YOUTUBE_ID_REGEX = Regex(
-        """(?:youtube(?:-nocookie)?\.com/(?:watch\?(?:[^#]*&)?v=|live/|embed/)|youtu\.be/)([A-Za-z0-9_-]{6,})"""
+        """(?:youtube(?:-nocookie)?\.com/(?:watch\?(?:[^#]*&)?v=|live/|embed/(?!live_stream\b))|youtu\.be/)([A-Za-z0-9_-]{6,})"""
     )
     private val YOUTUBE_CHANNEL_REGEX = Regex(
-        """youtube\.com/channel/([A-Za-z0-9_-]{10,})/live(?:[/?#]|$)"""
+        """(?:youtube(?:-nocookie)?\.com/channel/|embed/live_stream\?(?:[^#]*&)?channel=)([A-Za-z0-9_-]{10,})""",
+        RegexOption.IGNORE_CASE,
     )
     private val YOUTUBE_CANONICAL_REGEX = Regex(
         """<link\s+rel=["']canonical["']\s+href=["']https://www\.youtube\.com/watch\?v=([A-Za-z0-9_-]{6,})""",
@@ -90,9 +91,12 @@ object NativeStreamResolver {
         return channel.takeUnless { it.lowercase() in TWITCH_RESERVED }
     }
 
-    /** True for pages that have a dedicated resolver (YouTube, Twitch). */
+    /** True for pages that have a dedicated resolver (YouTube, Twitch, Webcamtaxi). */
     fun isResolvablePage(url: String?): Boolean =
-        youtubeVideoId(url) != null || youtubeChannelId(url) != null || twitchChannel(url) != null
+        youtubeVideoId(url) != null ||
+            youtubeChannelId(url) != null ||
+            twitchChannel(url) != null ||
+            url?.contains("webcamtaxi.com", ignoreCase = true) == true
 
     // ---------------------------------------------------------------- resolving
 
@@ -111,7 +115,7 @@ object NativeStreamResolver {
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
-            Log.w(TAG, "Could not resolve a native stream for $pageUrl", error)
+            runCatching { Log.w(TAG, "Could not resolve a native stream for $pageUrl", error) }
             null
         }
     }
@@ -199,7 +203,7 @@ object NativeStreamResolver {
                     headers = mapOf("User-Agent" to client.userAgent),
                 )
             }
-            Log.w(TAG, "YouTube client ${client.name} returned no live manifest for $videoId")
+            runCatching { Log.w(TAG, "YouTube client ${client.name} returned no live manifest for $videoId") }
         }
         return null
     }
@@ -292,10 +296,23 @@ object NativeStreamResolver {
             .header("User-Agent", BROWSER_USER_AGENT)
             .header("Accept", "text/html,application/xhtml+xml")
             .build()
-        val html = httpClient.newCall(request).execute().use { response ->
+        val rawHtml = httpClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful) return@use null
             response.body?.string()?.take(MAX_PAGE_CHARS)
         } ?: return null
+
+        val html = rawHtml.replace("\\/", "/").replace("&amp;", "&")
+
+        youtubeVideoId(html)?.let { ytId ->
+            resolveYoutube(ytId)?.let { return it }
+        }
+        youtubeChannelId(html)?.let { channelId ->
+            resolveYoutubeChannel(channelId)?.let { resolveYoutube(it) }?.let { return it }
+        }
+        twitchChannel(html)?.let { channel ->
+            resolveTwitch(channel)?.let { return it }
+        }
+
         return extractMediaUrl(html, url)
     }
 
