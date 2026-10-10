@@ -518,5 +518,55 @@
     "streamUrl": "http://www.insecam.org/en/view/237453/",
     "streamType": "INSECAM",
     "websiteUrl": "http://www.insecam.org/en/view/237453/"
+  },
+  {
+    "id": "webcamtaxi-aberdour",
+    "latitude": 56.054800,
+    "longitude": -3.295200,
+    "name": "Aberdour Cam, Fife",
+    "operator": "Webcamtaxi / YouTube",
+    "streamUrl": "https://www.youtube.com/channel/UCiizs91Obdveqoce7kSmImA/live",
+    "streamType": "YOUTUBE",
+    "websiteUrl": "https://www.webcamtaxi.com/en/scotland/fife/aberdour.html"
+  },
+  {
+    "id": "webcamtaxi-river-teign-teignmouth",
+    "latitude": 50.548000,
+    "longitude": -3.495000,
+    "name": "River Teign, Teignmouth Cam",
+    "operator": "Webcamtaxi / YouTube",
+    "streamUrl": "https://www.youtube.com/channel/UCiizs91Obdveqoce7kSmImA/live",
+    "streamType": "YOUTUBE",
+    "websiteUrl": "https://www.webcamtaxi.com/en/england/devon/river-teign-teignmouth.html"
+  },
+  {
+    "id": "webcamtaxi-bridport-harbour",
+    "latitude": 50.710000,
+    "longitude": -2.759000,
+    "name": "Bridport Harbour West Bay Cam",
+    "operator": "Webcamtaxi / YouTube",
+    "streamUrl": "https://www.youtube.com/channel/UCiizs91Obdveqoce7kSmImA/live",
+    "streamType": "YOUTUBE",
+    "websiteUrl": "https://www.webcamtaxi.com/en/england/dorset/bridport-harbour.html"
+  },
+  {
+    "id": "webcamtaxi-york-railway-station",
+    "latitude": 53.959000,
+    "longitude": -1.091000,
+    "name": "York Railway Cam",
+    "operator": "Webcamtaxi / YouTube",
+    "streamUrl": "https://www.youtube.com/channel/UCiizs91Obdveqoce7kSmImA/live",
+    "streamType": "YOUTUBE",
+    "websiteUrl": "https://www.webcamtaxi.com/en/england/north-yorkshire/york-railway-station.html"
+  },
+  {
+    "id": "webcamtaxi-saundersfoot-beach-harbour",
+    "latitude": 51.710000,
+    "longitude": -4.690000,
+    "name": "Saundersfoot Beach Cam",
+    "operator": "Webcamtaxi / YouTube",
+    "streamUrl": "https://www.youtube.com/channel/UCiizs91Obdveqoce7kSmImA/live",
+    "streamType": "YOUTUBE",
+    "websiteUrl": "https://www.webcamtaxi.com/en/wales/pembrokeshire/saundersfoot-beach-harbour.html"
   }
 ]
