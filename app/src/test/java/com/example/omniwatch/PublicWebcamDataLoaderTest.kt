@@ -36,7 +36,7 @@ class PublicWebcamDataLoaderTest {
         val type = object : TypeToken<List<WebcamRecord>>() {}.type
         val records: List<WebcamRecord> = Gson().fromJson(requireNotNull(asset).readText(), type)
 
-        assertEquals("Expected 57 webcams in expanded catalogue", 57, records.size)
+        assertEquals("Expected 119 webcams in expanded catalogue", 119, records.size)
 
         val ids = records.map { it.id }
         val ukInsecamIds = listOf(
