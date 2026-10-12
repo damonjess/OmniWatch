@@ -1800,24 +1800,14 @@
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/empire-state-building.html"
   },
   {
-    "id": "public-webcam-skyline-nyc-230-fifth",
-    "latitude": 40.7441,
-    "longitude": -73.9877,
-    "name": "NYC Skyline from 230 Fifth, New York (USA)",
-    "operator": "SkylineWebcams",
-    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/230-fifth.html",
-    "streamType": "SKYLINE",
-    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/230-fifth.html"
-  },
-  {
     "id": "public-webcam-skyline-46th-street-new-york",
     "latitude": 40.7583,
     "longitude": -73.9842,
     "name": "46th Street, New York (USA)",
     "operator": "SkylineWebcams",
-    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/46th-street.html",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/nyc-46th-street.html",
     "streamType": "SKYLINE",
-    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/46th-street.html"
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/nyc-46th-street.html"
   },
   {
     "id": "public-webcam-skyline-times-square-ball-drop",
@@ -1825,9 +1815,9 @@
     "longitude": -73.9865,
     "name": "Times Square Ball Drop, New York (USA)",
     "operator": "SkylineWebcams",
-    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/times-square-ball-drop.html",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/ball-drop-times-square.html",
     "streamType": "SKYLINE",
-    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/times-square-ball-drop.html"
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/ball-drop-times-square.html"
   },
   {
     "id": "public-webcam-skyline-broadway-49th-street",
@@ -1835,9 +1825,9 @@
     "longitude": -73.9835,
     "name": "Broadway Billboards at 49th Street, New York (USA)",
     "operator": "SkylineWebcams",
-    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/broadway-49th-street.html",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/new-york-city.html",
     "streamType": "SKYLINE",
-    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/broadway-49th-street.html"
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/new-york-city.html"
   },
   {
     "id": "public-webcam-skyline-times-square-podcast",
@@ -1845,9 +1835,9 @@
     "longitude": -73.9855,
     "name": "Times Square Podcast Studio, New York (USA)",
     "operator": "SkylineWebcams",
-    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/times-square-podcast.html",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/podcast-view-times-square.html",
     "streamType": "SKYLINE",
-    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/times-square-podcast.html"
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/podcast-view-times-square.html"
   },
   {
     "id": "public-webcam-skyline-cabo-san-lucas",

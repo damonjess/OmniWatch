@@ -36,7 +36,7 @@ class PublicWebcamDataLoaderTest {
         val type = object : TypeToken<List<WebcamRecord>>() {}.type
         val records: List<WebcamRecord> = Gson().fromJson(requireNotNull(asset).readText(), type)
 
-        assertEquals("Expected 198 webcams in expanded catalogue", 198, records.size)
+        assertEquals("Expected 197 webcams in expanded catalogue", 197, records.size)
 
         val ids = records.map { it.id }
         val ukInsecamIds = listOf(
@@ -70,6 +70,23 @@ class PublicWebcamDataLoaderTest {
         assertTrue("River Wye webcam missing", ids.contains("public-webcam-river-wye-hereford"))
         assertTrue("Sutton Coldfield webcam missing", ids.contains("public-webcam-sutton-coldfield"))
         assertTrue("Bala Gwynedd webcam missing", ids.contains("public-webcam-bala-gwynedd"))
+        assertFalse("Unavailable 230 Fifth Skyline camera must not be included", ids.contains("public-webcam-skyline-nyc-230-fifth"))
+        assertEquals(
+            "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/nyc-46th-street.html",
+            records.first { it.id == "public-webcam-skyline-46th-street-new-york" }.streamUrl,
+        )
+        assertEquals(
+            "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/ball-drop-times-square.html",
+            records.first { it.id == "public-webcam-skyline-times-square-ball-drop" }.streamUrl,
+        )
+        assertEquals(
+            "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/new-york-city.html",
+            records.first { it.id == "public-webcam-skyline-broadway-49th-street" }.streamUrl,
+        )
+        assertEquals(
+            "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/podcast-view-times-square.html",
+            records.first { it.id == "public-webcam-skyline-times-square-podcast" }.streamUrl,
+        )
         val londonTraffic = records.first { it.id == "webcamtaxi-london-traffic" }
         assertEquals("MP4", londonTraffic.streamType)
         assertTrue(londonTraffic.streamUrl.endsWith("00001.02500.mp4"))
@@ -104,7 +121,7 @@ class PublicWebcamDataLoaderTest {
         // SkylineWebcams hides its playlist behind a page, so these entries must stay marked
         // SKYLINE with the operator page as the stream URL for the resolver to find a feed.
         val skyline = records.filter { it.streamType.equals("SKYLINE", ignoreCase = true) }
-        assertEquals("Expected 97 SkylineWebcams entries marked SKYLINE", 97, skyline.size)
+        assertEquals("Expected 96 SkylineWebcams entries marked SKYLINE", 96, skyline.size)
         skyline.forEach { record ->
             assertTrue(
                 "Skyline entry ${record.id} must point at a resolvable operator page",

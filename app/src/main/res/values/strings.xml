@@ -64,6 +64,7 @@
     <string name="webcam_live">LIVE • %1$s</string>
     <string name="webcam_stream_unavailable">Live feed unavailable — check your connection and tap the marker again.</string>
     <string name="webcam_playback_failed">Live feed unavailable — the operator may be offline.</string>
+    <string name="camera_snapshot_indicator">STILL IMAGE • refreshes every %1$d s (no video from this source)</string>
     <string name="webcam_snapshot_fallback">Live video unavailable — showing the latest image instead.</string>
     <string name="webcam_page_unavailable">This camera page could not be loaded — the operator site may be offline or use an insecure connection.</string>
     <string name="verify_with_street_imagery">Verify with Street Imagery</string>

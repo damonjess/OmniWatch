@@ -1195,6 +1195,9 @@ class MapsActivity : AppCompatActivity() {
         }
 
         ivFeed.context.imageLoader.enqueue(buildRequest(refresh = false))
+        // This sheet only ever shows a still that is re-fetched on a timer, never video, so say so
+        // instead of labelling it a live feed.
+        tvLiveIndicator.text = getString(R.string.camera_snapshot_indicator, (SNAPSHOT_REFRESH_MS / 1000).toInt())
         tvLiveIndicator.visibility = View.VISIBLE
         bottomSheetDialog.setContentView(view)
 
