@@ -45,6 +45,10 @@ object NativeStreamResolver {
     // Twitch playback starts failing with an authorization error in logcat.
     private const val TWITCH_CLIENT_ID = "kimne78kh0ncgl6j9vzmw0wv3ykpqa"
 
+    // Tried in order until Twitch accepts one. The second is a fallback written from memory, so a
+    // rejection of both shows up in logcat (tag NativeStreamResolver) with Twitch's own message.
+    private val TWITCH_CLIENT_IDS = listOf(TWITCH_CLIENT_ID, "ue6666qo983tsx6so1t0vnawi233wa")
+
     private val YOUTUBE_ID_REGEX = Regex(
         """(?:youtube(?:-nocookie)?\.com/(?:watch\?(?:[^#]*&)?v=|live/|embed/(?!live_stream\b))|youtu\.be/)([A-Za-z0-9_-]{6,})"""
     )
@@ -253,28 +257,58 @@ object NativeStreamResolver {
             "params: {platform: \"web\", playerBackend: \"mediaplayer\", playerType: \"site\"}) " +
             "{ value signature } }"
         val body = JsonObject().apply { addProperty("query", query) }.toString()
-        val request = Request.Builder()
-            .url("https://gql.twitch.tv/gql")
-            .header("Client-ID", TWITCH_CLIENT_ID)
-            .header("User-Agent", BROWSER_USER_AGENT)
-            .post(body.toRequestBody("application/json".toMediaType()))
-            .build()
-        val token = httpClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) return@use null
-            parseTwitchToken(response.body?.string().orEmpty())
-        } ?: return null
+        val twitchHeaders = mapOf(
+            "User-Agent" to BROWSER_USER_AGENT,
+            "Origin" to "https://www.twitch.tv",
+            "Referer" to "https://www.twitch.tv/",
+        )
 
-        val playlist = "https://usher.ttvnw.net/api/channel/hls/$channel.m3u8".toHttpUrl()
-            .newBuilder()
-            .addQueryParameter("sig", token.second)
-            .addQueryParameter("token", token.first)
-            .addQueryParameter("allow_source", "true")
-            .addQueryParameter("allow_audio_only", "true")
-            .addQueryParameter("player", "twitchweb")
-            .addQueryParameter("p", (100000..999999).random().toString())
-            .build()
-            .toString()
-        return Resolved(playlist, CameraStreams.HLS, mapOf("User-Agent" to BROWSER_USER_AGENT))
+        for (clientId in TWITCH_CLIENT_IDS) {
+            val request = Request.Builder()
+                .url("https://gql.twitch.tv/gql")
+                .header("Client-ID", clientId)
+                .apply { twitchHeaders.forEach { (name, value) -> header(name, value) } }
+                .post(body.toRequestBody("application/json".toMediaType()))
+                .build()
+            val token = httpClient.newCall(request).execute().use { response ->
+                val text = response.body?.string().orEmpty()
+                if (!response.isSuccessful) {
+                    Log.w(TAG, "Twitch token request (client ${clientId.take(6)}…) returned HTTP ${response.code}: ${text.take(200)}")
+                    return@use null
+                }
+                parseTwitchToken(text).also { parsed ->
+                    if (parsed == null) {
+                        Log.w(TAG, "Twitch gave no playback token for $channel (client ${clientId.take(6)}…): ${text.take(200)}")
+                    }
+                }
+            } ?: continue
+
+            val playlist = "https://usher.ttvnw.net/api/channel/hls/$channel.m3u8".toHttpUrl()
+                .newBuilder()
+                .addQueryParameter("sig", token.second)
+                .addQueryParameter("token", token.first)
+                .addQueryParameter("allow_source", "true")
+                .addQueryParameter("allow_audio_only", "true")
+                .addQueryParameter("player", "twitchweb")
+                .addQueryParameter("p", (100000..999999).random().toString())
+                .build()
+                .toString()
+
+            // Fetch the playlist once so a failure is logged with its reason (404 normally means
+            // the channel is offline) instead of surfacing later as a bare player error.
+            val probe = Request.Builder()
+                .url(playlist)
+                .apply { twitchHeaders.forEach { (name, value) -> header(name, value) } }
+                .build()
+            val playable = httpClient.newCall(probe).execute().use { response ->
+                if (!response.isSuccessful) {
+                    Log.w(TAG, "Twitch playlist for $channel returned HTTP ${response.code} (404 usually means the channel is offline)")
+                }
+                response.isSuccessful
+            }
+            return if (playable) Resolved(playlist, CameraStreams.HLS, twitchHeaders) else null
+        }
+        return null
     }
 
     /** Returns (token, signature) from a GQL playback-access-token response, or null. */

@@ -15,9 +15,9 @@
     "longitude": 1.4197,
     "name": "Ramsgate Royal Harbour",
     "operator": "Royal Harbour Live",
-    "streamUrl": "https://www.youtube.com/watch?v=H3A2RSYTzdI",
+    "streamUrl": "https://www.youtube.com/channel/UCcrSw7gTYq6ZQ1MdIo23Q1w",
     "streamType": "WEB",
-    "websiteUrl": "https://www.youtube.com/watch?v=H3A2RSYTzdI"
+    "websiteUrl": "https://www.youtube.com/channel/UCcrSw7gTYq6ZQ1MdIo23Q1w"
   },
   {
     "id": "public-webcam-lyme-regis-seafront",
@@ -1968,5 +1968,15 @@
     "streamUrl": "https://www.skylinewebcams.com/en/webcam/kenya/malindi/watamu/watamu-beach.html",
     "streamType": "SKYLINE",
     "websiteUrl": "https://www.skylinewebcams.com/en/webcam/kenya/malindi/watamu/watamu-beach.html"
+  },
+  {
+    "id": "public-webcam-skyline-nyc-skyline-230-fifth",
+    "latitude": 40.7443,
+    "longitude": -73.9873,
+    "name": "New York City Skyline, 230 Fifth (USA)",
+    "operator": "SkylineWebcams",
+    "streamUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/new-york-skyline.html",
+    "streamType": "SKYLINE",
+    "websiteUrl": "https://www.skylinewebcams.com/en/webcam/united-states/new-york/new-york/new-york-skyline.html"
   }
 ]
