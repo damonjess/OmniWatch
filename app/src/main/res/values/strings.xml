@@ -27,6 +27,7 @@
     <string name="legend_webcam">Public Webcams</string>
     <string name="legend_insecam">Insecam IP Cameras</string>
     <string name="legend_iss">ISS</string>
+    <string name="legend_live_video_note">Green dome icon = live video, round dot = still image</string>
     <string name="iss_button">ISS</string>
     <string name="iss_title">ISS - LIVE HD VIEWS FROM SPACE</string>
     <string name="iss_unavailable">ISS position unavailable - check your connection.</string>

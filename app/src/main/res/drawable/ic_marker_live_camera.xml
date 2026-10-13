@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dome CCTV camera, drawn on a 26x22 grid. Used for cameras that play live video. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="26dp"
+    android:height="22dp"
+    android:viewportWidth="26"
+    android:viewportHeight="22">
+    <!-- Mounting bar -->
+    <path
+        android:fillColor="#101418"
+        android:pathData="M2.5,3.5h21v4h-21z"
+        android:strokeColor="#4ADE80"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.6" />
+    <!-- Dome -->
+    <path
+        android:fillColor="#101418"
+        android:pathData="M4.5,7.5a8.5,8.5 0 0 0 17,0z"
+        android:strokeColor="#4ADE80"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.6" />
+    <!-- Lens glow and lens -->
+    <path
+        android:fillAlpha="0.35"
+        android:fillColor="#4ADE80"
+        android:pathData="M13,12.2m-3.4,0a3.4,3.4 0 1 1 6.8,0a3.4,3.4 0 1 1 -6.8,0" />
+    <path
+        android:fillColor="#4ADE80"
+        android:pathData="M13,12.2m-1.8,0a1.8,1.8 0 1 1 3.6,0a1.8,1.8 0 1 1 -3.6,0" />
+</vector>

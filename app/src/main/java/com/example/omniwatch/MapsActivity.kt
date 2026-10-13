@@ -834,43 +834,43 @@ class MapsActivity : AppCompatActivity() {
 
                 when {
                     node.source == SOURCE_INSECAM -> {
-                        icon = markerIcon(INSECAM_COLOR)
+                        icon = cameraIcon(node, INSECAM_COLOR)
                         insecamOverlay.add(this)
                     }
                     node.isWebcam -> {
-                        icon = markerIcon(WEBCAM_COLOR)
+                        icon = cameraIcon(node, WEBCAM_COLOR)
                         webcamOverlay.add(this)
                     }
                     node.source == SOURCE_NATIONAL_HIGHWAYS -> {
-                        icon = markerIcon(HIGHWAY_COLOR)
+                        icon = cameraIcon(node, HIGHWAY_COLOR)
                         highwayOverlay.add(this)
                     }
                     node.source == SOURCE_TRAFFIC_WALES -> {
-                        icon = markerIcon(WALES_COLOR)
+                        icon = cameraIcon(node, WALES_COLOR)
                         walesOverlay.add(this)
                     }
                     node.source == SOURCE_TRAFFICWATCH_NI -> {
-                        icon = markerIcon(NI_COLOR)
+                        icon = cameraIcon(node, NI_COLOR)
                         niOverlay.add(this)
                     }
                     node.source == SOURCE_ESSEX_HIGHWAYS -> {
-                        icon = markerIcon(ESSEX_COLOR)
+                        icon = cameraIcon(node, ESSEX_COLOR)
                         essexOverlay.add(this)
                     }
                     node.source == SOURCE_TRAFFICVISION -> {
-                        icon = markerIcon(TRAFFICVISION_COLOR)
+                        icon = cameraIcon(node, TRAFFICVISION_COLOR)
                         trafficVisionOverlay.add(this)
                     }
                     node.isTrafficCamera -> {
-                        icon = markerIcon(TRAFFIC_COLOR)
+                        icon = cameraIcon(node, TRAFFIC_COLOR)
                         trafficOverlay.add(this)
                     }
                     node.isCouncil -> {
-                        icon = markerIcon(COUNCIL_COLOR)
+                        icon = cameraIcon(node, COUNCIL_COLOR)
                         councilOverlay.add(this)
                     }
                     else -> {
-                        icon = markerIcon(MARKER_COLOR)
+                        icon = cameraIcon(node, MARKER_COLOR)
                         osmOverlay.add(this)
                     }
                 }
@@ -1725,7 +1725,8 @@ class MapsActivity : AppCompatActivity() {
         val webcamLabel = getString(R.string.legend_webcam)
         val insecamLabel = getString(R.string.legend_insecam)
         val issLabel = getString(R.string.legend_iss)
-        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $londonLabel   $dot $highwayLabel   $dot $walesLabel   $dot $niLabel   $dot $essexLabel   $dot $trafficVisionLabel   $dot $webcamLabel   $dot $insecamLabel   $dot $issLabel")
+        val liveVideoNote = getString(R.string.legend_live_video_note)
+        val legend = SpannableString("$dot $osmLabel   $dot $councilLabel   $dot $londonLabel   $dot $highwayLabel   $dot $walesLabel   $dot $niLabel   $dot $essexLabel   $dot $trafficVisionLabel   $dot $webcamLabel   $dot $insecamLabel   $dot $issLabel\n$liveVideoNote")
         val councilDot = legend.indexOf(dot, 1)
         val londonDot = legend.indexOf(dot, councilDot + 1)
         val highwayDot = legend.indexOf(dot, londonDot + 1)
@@ -1762,8 +1763,26 @@ class MapsActivity : AppCompatActivity() {
         legend.setSpan(ForegroundColorSpan(WEBCAM_COLOR), webcamDot, webcamDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(ForegroundColorSpan(INSECAM_COLOR), insecamDot, insecamDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         legend.setSpan(ForegroundColorSpan(ISS_COLOR), issDot, issDot + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        legend.setSpan(
+            ForegroundColorSpan(LIVE_VIDEO_COLOR),
+            legend.length - liveVideoNote.length,
+            legend.length,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
         legendView.text = legend
     }
+
+    /**
+     * Live-video cameras get the green dome icon whatever their source; cameras that only offer a
+     * still image keep the plain dot in their source colour.
+     */
+    private fun cameraIcon(node: CctvNode, dotColor: Int): Drawable =
+        if (MarkerStyle.hasLiveVideo(node)) {
+            ContextCompat.getDrawable(this, R.drawable.ic_marker_live_camera)?.mutate()
+                ?: markerIcon(dotColor)
+        } else {
+            markerIcon(dotColor)
+        }
 
     private fun markerIcon(color: Int, sizeDp: Int = MARKER_SIZE_DP): Drawable {
         val density = resources.displayMetrics.density
@@ -1886,6 +1905,7 @@ class MapsActivity : AppCompatActivity() {
         val TRAFFICVISION_COLOR: Int = "#AEEA00".toColorInt()
         val WEBCAM_COLOR: Int = "#00BCD4".toColorInt()
         val INSECAM_COLOR: Int = "#FF5722".toColorInt()
+        val LIVE_VIDEO_COLOR: Int = "#4ADE80".toColorInt()
         val ISS_COLOR: Int = "#E040FB".toColorInt()
     }
 }
